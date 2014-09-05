@@ -602,6 +602,7 @@ if CONFIG['MOZ_B2G_RIL']:
         'IccCardLockError.webidl',
         'MozCellBroadcast.webidl',
         'MozIcc.webidl',
+        'MozIccInfo.webidl',
         'MozIccManager.webidl',
         'MozVoicemail.webidl',
         'MozVoicemailStatus.webidl'
