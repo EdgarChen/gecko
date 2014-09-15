@@ -5,11 +5,12 @@
 #include "nsISupports.idl"
 #include "nsINetworkManager.idl"
 
+interface nsICellInfoListCallback;
 interface nsIDOMMozIccInfo;
+interface nsIMobileConnectionCallback;
 interface nsIMobileConnectionInfo;
 interface nsIMobileMessageCallback;
 interface nsINeighboringCellIdsCallback;
-interface nsICellInfoListCallback;
 
 [scriptable, uuid(6e0f45b8-410e-11e3-8c8e-b715b2cd0128)]
 interface nsIRilNetworkInterface : nsINetworkInterface
@@ -47,7 +48,7 @@ interface nsIRilSendWorkerMessageCallback : nsISupports
   boolean handleResponse(in jsval response);
 };
 
-[scriptable, uuid(c13a8890-797b-4557-b92f-6b959f56c1d8)]
+[scriptable, uuid(aa64c940-3cb0-11e4-916c-0800200c9a66)]
 interface nsIRadioInterface : nsISupports
 {
   readonly attribute nsIRilContext rilContext;
@@ -88,6 +89,64 @@ interface nsIRadioInterface : nsISupports
    * neighboring cells.
    */
   void getCellInfoList(in nsICellInfoListCallback callback);
+
+  /**
+   * MobileConnection-related functionality.
+   */
+
+  /**
+   * Search for available networks.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifyGetNetworksSuccess() will be called. And the
+   * result will be an array of nsIMobileNetworkInfo.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void getNetworks(in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Set preferred network type.
+   *
+   * @param type
+   *        DOMString indicates the desired preferred network type.
+   *        Possible values: 'wcdma/gsm', 'gsm', 'wcdma', 'wcdma/gsm-auto',
+   *        'cdma/evdo', 'cdma', 'evdo', 'wcdma/gsm/cdma/evdo',
+   *        'lte/cdma/evdo', 'lte/wcdma/gsm', 'lte/wcdma/gsm/cdma/evdo' or
+   *        'lte'.
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccess() will be called.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter',
+   * 'IllegalSIMorME', or 'GenericFailure'.
+   */
+  void setPreferredNetworkType(in DOMString type,
+                               in nsIMobileConnectionCallback requestCallback);
+
+  /**
+   * Query current preferred network type.
+   *
+   * @param requestCallback
+   *        Called when request is finished.
+   *
+   * If successful, the notifySuccessString() will be called. And the result
+   * will be a string indicating the current preferred network type. The value
+   * will be either 'wcdma/gsm', 'gsm', 'wcdma', 'wcdma/gsm-auto', 'cdma/evdo',
+   * 'cdma', 'evdo', 'wcdma/gsm/cdma/evdo', 'lte/cdma/evdo', 'lte/wcdma/gsm',
+   * 'lte/wcdma/gsm/cdma/evdo' or 'lte'.
+   *
+   * Otherwise, the notifyError() will be called, and the error will be either
+   * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or
+   * 'GenericFailure'.
+   */
+  void getPreferredNetworkType(in nsIMobileConnectionCallback requestCallback);
 };
 
 [scriptable, uuid(78b65e8c-68e7-4510-9a05-65bba12b283e)]
