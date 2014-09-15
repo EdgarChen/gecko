@@ -4005,6 +4005,63 @@ RadioInterface.prototype = {
       callback.notifyGetNeighboringCellIds(neighboringCellIds);
 
     }.bind(this));
+  },
+
+  /**
+   * MobileConnection-related functionality.
+   */
+
+  _sendWorkerMessage: function(aType, aMessage, aCallback) {
+    let rilSendWorkerMessageCallback = {
+      handleResponse: aCallback
+    };
+    this.sendWorkerMessage(aType, aMessage, rilSendWorkerMessageCallback);
+  },
+
+  getNetworks: function(aCallback) {
+    this._sendWorkerMessage("getAvailableNetworks", null, (function(aResponse) {
+      if (aResponse.errorMsg) {
+        aCallback.notifyError(aResponse.errorMsg);
+        return false;
+      }
+
+      let networks = aResponse.networks;
+      for (let i = 0; i < networks.length; i++) {
+        // Edgar: Error here :(
+        let info = new MobileNetworkInfo();
+        this._updateInfo(info, networks[i]);
+        networks[i] = info;
+      }
+
+      aCallback.notifyGetNetworksSuccess(networks.length, networks);
+      return false;
+    }).bind(this));
+  },
+
+  setPreferredNetworkType: function(aType, aCallback) {
+    this._sendWorkerMessage("setPreferredNetworkType", {type: aType},
+                            (function(aResponse) {
+      if (aResponse.errorMsg) {
+        aCallback.notifyError(aResponse.errorMsg);
+        return false;
+      }
+
+      aCallback.notifySuccess();
+      return false;
+    }).bind(this));
+  },
+
+  getPreferredNetworkType: function(aCallback) {
+    this._sendWorkerMessage("getPreferredNetworkType", null,
+                            (function(aResponse) {
+      if (aResponse.errorMsg) {
+        aCallback.notifyError(aResponse.errorMsg);
+        return false;
+      }
+
+      aCallback.notifySuccessWithString(aResponse.type);
+      return false;
+    }).bind(this));
   }
 };
 

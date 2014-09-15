@@ -505,23 +505,7 @@ MobileConnectionProvider.prototype = {
   },
 
   getNetworks: function(aCallback) {
-    this._radioInterface.sendWorkerMessage("getAvailableNetworks", null,
-                                           (function(aResponse) {
-      if (aResponse.errorMsg) {
-        aCallback.notifyError(aResponse.errorMsg);
-        return false;
-      }
-
-      let networks = aResponse.networks;
-      for (let i = 0; i < networks.length; i++) {
-        let info = new MobileNetworkInfo();
-        this._updateInfo(info, networks[i]);
-        networks[i] = info;
-      }
-
-      aCallback.notifyGetNetworksSuccess(networks.length, networks);
-      return false;
-    }).bind(this));
+    this._radioInterface.getNetworks(aCallback);
   },
 
   selectNetwork: function(aNetwork, aCallback) {
@@ -578,17 +562,7 @@ MobileConnectionProvider.prototype = {
       return;
     }
 
-    this._radioInterface.sendWorkerMessage("setPreferredNetworkType",
-                                           {type: aType},
-                                           (function(aResponse) {
-      if (aResponse.errorMsg) {
-        aCallback.notifyError(aResponse.errorMsg);
-        return false;
-      }
-
-      aCallback.notifySuccess();
-      return false;
-    }).bind(this));
+    this._radioInterface.setPreferredNetworkType(aType, aCallback);
   },
 
   getPreferredNetworkType: function(aCallback) {
@@ -597,16 +571,7 @@ MobileConnectionProvider.prototype = {
       return;
     }
 
-    this._radioInterface.sendWorkerMessage("getPreferredNetworkType", null,
-                                           (function(aResponse) {
-      if (aResponse.errorMsg) {
-        aCallback.notifyError(aResponse.errorMsg);
-        return false;
-      }
-
-      aCallback.notifySuccessWithString(aResponse.type);
-      return false;
-    }).bind(this));
+    this._radioInterface.getPreferredNetworkType(aCallback);
   },
 
   setRoamingPreference: function(aMode, aCallback) {
