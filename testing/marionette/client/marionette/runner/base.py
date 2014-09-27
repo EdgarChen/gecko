@@ -750,10 +750,14 @@ class BaseMarionetteTestRunner(object):
                     raise IOError("test file: %s does not exist" % i["path"])
 
                 file_ext = os.path.splitext(os.path.split(i['path'])[-1])[-1]
-                test_container = False
-                if i.get('test_container') and i.get('test_container') == 'true' and testarg_b2g:
-                    test_container = True
-                self.add_test(i["path"], i["expected"], test_container)
+                if i.get('test_container') and i.get('test_container') == 'both' and testarg_b2g:
+                    self.add_test(i["path"], i["expected"], True)
+                    self.add_test(i["path"], i["expected"], False)
+                elif i.get('test_container') and i.get('test_container') == 'true' and testarg_b2g:
+                    self.add_test(i["path"], i["expected"], True)
+                else:
+                    self.add_test(i["path"], i["expected"], False)
+
             return
 
         self.tests.append({'filepath': filepath, 'expected': expected, 'test_container': test_container})
@@ -823,7 +827,14 @@ class BaseMarionetteTestRunner(object):
                                                len(self.tests)))
             self.tests = chunks[self.this_chunk - 1]
 
-        self.run_test_set(self.tests)
+        # When we run in-process tests, we unload Gaia's system app, and we
+        # can't easily get back to that state.  So, we run the OOP tests first,
+        # then the in-process tests.
+        oop_tests = [x for x in self.tests if x.get('test_container')]
+        self.run_test_set(oop_tests)
+
+        in_process_tests = [x for x in self.tests if not x.get('test_container')]
+        self.run_test_set(in_process_tests)
 
     def cleanup(self):
         if self.httpd:
