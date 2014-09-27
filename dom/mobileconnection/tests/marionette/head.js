@@ -330,19 +330,22 @@ function getMozMobileConnectionByServiceId(aServiceId) {
  * @param aServiceId [optional]
  *        A numeric DSDS service id. Default: the one indicated in
  *        start*TestCommon() or 0 if not indicated.
+ * @param aMachFunction [optional]
  *
  * @return A deferred promise.
  */
-function waitForManagerEvent(aEventName, aServiceId) {
+function waitForManagerEvent(aEventName, aServiceId, aMachFunction) {
   let deferred = Promise.defer();
 
   let mobileConn = getMozMobileConnectionByServiceId(aServiceId);
 
   mobileConn.addEventListener(aEventName, function onevent(aEvent) {
-    mobileConn.removeEventListener(aEventName, onevent);
-
     ok(true, "MobileConnection event '" + aEventName + "' got.");
-    deferred.resolve(aEvent);
+
+    if (!aMachFunction || aMachFunction(aEvent)) {
+      mobileConn.removeEventListener(aEventName, onevent);
+      deferred.resolve(aEvent);
+    }
   });
 
   return deferred.promise;
@@ -711,26 +714,16 @@ function setRadioEnabled(aEnabled, aServiceId) {
  * @return A deferred promise.
  */
 function setRadioEnabledAndWait(aEnabled, aServiceId) {
-  let deferred = Promise.defer();
-
   let promises = [];
   promises.push(waitForManagerEvent("radiostatechange", aServiceId));
-  promises.push(setRadioEnabled(aEnabled, aServiceId));
-  Promise.all(promises).then(function keepWaiting() {
-    let mobileConn = getMozMobileConnectionByServiceId(aServiceId);
+  promises.push(setRadioEnabled(aEnabled, aServiceId, function() {
     // To ignore some transient states, we only resolve that deferred promise
     // when |radioState| equals to the expected one and never rejects.
     let state = mobileConn.radioState;
-    aEnabled = aEnabled ? "enabled" : "disabled";
-    if (state == aEnabled) {
-      deferred.resolve();
-      return;
-    }
+    return state === (aEnabled ? "enabled" : "disabled");
+  }));
 
-    return waitForManagerEvent("radiostatechange", aServiceId).then(keepWaiting);
-  });
-
-  return deferred.promise;
+  return Promise.all(promises);
 }
 
 /**

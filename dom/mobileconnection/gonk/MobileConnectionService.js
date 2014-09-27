@@ -393,13 +393,8 @@ MobileConnectionProvider.prototype = {
     } else {
       aDestInfo.network = this._operatorInfo;
 
-      if (aSrcInfo.cell == null) {
-        if (aDestInfo.cell != null) {
-          isUpdated = true;
-          aDestInfo.cell = null;
-        }
-      } else {
-        if (aDestInfo.cell == null) {
+      if (aSrcInfo.cell) {
+        if (!aDestInfo.cell) {
           aDestInfo.cell = new MobileCellInfo();
         }
         isUpdated = this._updateInfo(aDestInfo.cell, aSrcInfo.cell) || isUpdated;
