@@ -15,6 +15,10 @@
 #include <sys/cdefs.h>
 #include <linux/kernel.h>
 
+
+#undef RTLD_NOLOAD
+extern int getdtablesize(void);
+
 #define sysinfo(foo) -1
 
 #endif /* ANDROID_STUB_H */

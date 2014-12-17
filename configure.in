@@ -291,6 +291,15 @@ if test -n "$gonkdir" ; then
         AC_DEFINE(MOZ_AUDIO_OFFLOAD)
 	MOZ_FMP4=1
         ;;
+    21)
+        GONK_INCLUDES="-I$gonkdir/frameworks/native/include -I$gonkdir/frameworks/av/include -I$gonkdir/frameworks/av/include/media -I$gonkdir/frameworks/av/include/camera -I$gonkdir/frameworks/native/include/media/openmax -I$gonkdir/frameworks/av/media/libstagefright/include -I$gonkdir/bionic/libc/kernel/uapi -I$gonkdir/bionic/libc/kernel/uapi/asm-arm"
+        MOZ_AUDIO_OFFLOAD=1
+        AC_SUBST(MOZ_AUDIO_OFFLOAD)
+        AC_DEFINE(MOZ_AUDIO_OFFLOAD)
+        # Disable fmp4 and webrtc before related bugs got fixed
+        MOZ_FMP4=
+        MOZ_WEBRTC=0
+        ;;
     *)
         AC_MSG_ERROR([Unsupported platform version: $ANDROID_VERSION])
         ;;
@@ -3398,7 +3407,7 @@ for file in $MALLOC_HEADERS; do
   fi
 done
 
-AC_CHECK_FUNCS(strndup posix_memalign memalign valloc)
+AC_CHECK_FUNCS(strndup posix_memalign memalign)
 
 AC_CHECK_FUNCS(malloc_usable_size)
 
@@ -3863,7 +3872,11 @@ else
 fi
 MOZ_EME=1
 MOZ_FFMPEG=
-MOZ_WEBRTC=1
+if test x"$MOZ_WEBRTC" = x"0"; then
+  MOZ_WEBRTC=
+else
+  MOZ_WEBRTC=1
+fi
 MOZ_PEERCONNECTION=
 MOZ_SRTP=
 MOZ_WEBRTC_SIGNALING=
@@ -5314,7 +5327,7 @@ dnl ========================================================
 dnl = Built-in fragmented MP4 support.
 dnl ========================================================
 
-if test "$OS_TARGET" = Android; then
+if test "$OS_TARGET" = Android -a x"$MOZ_WIDGET_TOOLKIT" != x"gonk"; then
     MOZ_FMP4=1
 fi
 

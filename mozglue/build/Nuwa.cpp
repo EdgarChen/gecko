@@ -55,10 +55,12 @@ int __real_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mtx);
 int __real_pthread_cond_timedwait(pthread_cond_t *cond,
                                   pthread_mutex_t *mtx,
                                   const struct timespec *abstime);
+#if ANDROID_VERSION < 21
 int __real___pthread_cond_timedwait(pthread_cond_t *cond,
                                     pthread_mutex_t *mtx,
                                     const struct timespec *abstime,
                                     clockid_t clock);
+#endif
 int __real_pthread_mutex_lock(pthread_mutex_t *mtx);
 int __real_poll(struct pollfd *fds, nfds_t nfds, int timeout);
 int __real_epoll_create(int size);
@@ -1123,6 +1125,7 @@ __wrap_pthread_cond_timedwait(pthread_cond_t *cond,
   return rv;
 }
 
+#if ANDROID_VERSION < 21
 extern "C" int __pthread_cond_timedwait(pthread_cond_t *cond,
                                         pthread_mutex_t *mtx,
                                         const struct timespec *abstime,
@@ -1164,6 +1167,7 @@ __wrap___pthread_cond_timedwait(pthread_cond_t *cond,
 
   return rv;
 }
+#endif
 
 extern "C" MFBT_API int
 __wrap_pthread_mutex_lock(pthread_mutex_t *mtx) {

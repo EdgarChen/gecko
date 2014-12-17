@@ -2388,11 +2388,13 @@ int NS_main(int argc, NS_tchar **argv)
       if (setpriority(PRIO_PROCESS, 0, prioVal)) {
         LOG(("setpriority(%d) failed, errno = %d", prioVal, errno));
       }
+#if ANDROID_VERSION < 21
       if (ioprio_set(IOPRIO_WHO_PROCESS, 0,
                      IOPRIO_PRIO_VALUE(ioprioClass, ioprioLevel))) {
         LOG(("ioprio_set(%d,%d) failed: errno = %d",
              ioprioClass, ioprioLevel, errno));
       }
+#endif
       FILE *fs = fopen("/proc/self/oom_score_adj", "w");
       if (fs) {
         fprintf(fs, "%d", oomScoreAdj);

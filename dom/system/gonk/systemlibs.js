@@ -129,6 +129,8 @@ this.libnetutils = (function() {
     ifc_disable: library.declare("ifc_disable", ctypes.default_abi,
                                  ctypes.int,
                                  ctypes.char.ptr),
+    /* this is removed in L release
+     * need to use ifc_add_route instead
     ifc_add_host_route: library.declare("ifc_add_host_route",
                                         ctypes.default_abi,
                                         ctypes.int,
@@ -147,6 +149,7 @@ this.libnetutils = (function() {
                                            ctypes.default_abi,
                                            ctypes.int,
                                            ctypes.char.ptr),
+    */
     ifc_remove_default_route: library.declare("ifc_remove_default_route",
                                               ctypes.default_abi,
                                               ctypes.int,
@@ -159,6 +162,7 @@ this.libnetutils = (function() {
                                    ctypes.int,
                                    ctypes.int,
                                    ctypes.int),
+    /*
     ifc_add_route: library.declare("ifc_add_route", ctypes.default_abi,
                                    ctypes.int, // return value
                                    ctypes.char.ptr, // ifname
@@ -171,6 +175,7 @@ this.libnetutils = (function() {
                                       ctypes.char.ptr, // dst
                                       ctypes.int, // prefix_length
                                       ctypes.char.ptr), // gw
+    */
     dhcp_stop: library.declare("dhcp_stop", ctypes.default_abi,
                                ctypes.int,
                                ctypes.char.ptr),
