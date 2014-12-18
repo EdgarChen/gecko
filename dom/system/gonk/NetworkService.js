@@ -35,7 +35,7 @@ const WIFI_CTRL_INTERFACE = "wl0.1";
 
 const MANUAL_PROXY_CONFIGURATION = 1;
 
-let DEBUG = false;
+let DEBUG = true;
 
 // Read debug setting from pref.
 try {

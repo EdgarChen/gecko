@@ -27,7 +27,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>  // inet_ntop()
 
-#define _DEBUG 0
+#define _DEBUG 1
 
 #define WARN(args...)   __android_log_print(ANDROID_LOG_WARN,  "NetworkUtils", ## args)
 #define ERROR(args...)  __android_log_print(ANDROID_LOG_ERROR,  "NetworkUtils", ## args)

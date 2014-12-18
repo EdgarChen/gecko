@@ -119,7 +119,7 @@ const CONNECTION_TYPE_WIFI      = 3;
 const CONNECTION_TYPE_OTHER     = 4;
 const CONNECTION_TYPE_NONE      = 5;
 
-let DEBUG = false;
+let DEBUG = true;
 
 // Read debug setting from pref.
 try {
