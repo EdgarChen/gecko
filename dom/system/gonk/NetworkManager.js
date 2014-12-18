@@ -329,7 +329,7 @@ NetworkManager.prototype = {
 #ifdef MOZ_B2G_RIL
         // Add host route for data calls
         if (this.isNetworkTypeMobile(network.type)) {
-          gNetworkService.removeHostRoutes(network.name);
+          // gNetworkService.removeHostRoutes(network.name);
           this.setHostRoutes(network);
         }
         // Dun type is a special case where we add the default route to a
@@ -340,7 +340,7 @@ NetworkManager.prototype = {
 #endif
         // Remove pre-created default route and let setAndConfigureActive()
         // to set default route only on preferred network
-        gNetworkService.removeDefaultRoute(network);
+        // gNetworkService.removeDefaultRoute(network);
         this.setAndConfigureActive();
 #ifdef MOZ_B2G_RIL
         // Update data connection when Wifi connected/disconnected
@@ -374,7 +374,7 @@ NetworkManager.prototype = {
           gNetworkService.resetRoutingTable(network);
 #ifdef MOZ_B2G_RIL
         } else if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE) {
-          gNetworkService.removeDefaultRoute(network);
+          // gNetworkService.removeDefaultRoute(network);
 #endif
         }
 
@@ -452,6 +452,7 @@ NetworkManager.prototype = {
   },
 
   _updateRoutes: function(doAdd, ipAddresses, networkName, gateways) {
+    /*
     let promises = [];
 
     ipAddresses.forEach((aIpAddress) => {
@@ -464,6 +465,8 @@ NetworkManager.prototype = {
     });
 
     return Promise.all(promises);
+    */
+    return Promise.resolve();
   },
 
   isValidatedNetwork: function(network) {
@@ -1310,11 +1313,13 @@ NetworkManager.prototype = {
   },
 
   _setDefaultRouteAndDNS: function(network, oldInterface) {
+    /*
     gNetworkService.setDefaultRoute(network, oldInterface, function(success) {
       gNetworkService.setDNS(network, function(result) {
         gNetworkService.setNetworkProxy(network);
       });
     });
+    */
   },
 };
 
