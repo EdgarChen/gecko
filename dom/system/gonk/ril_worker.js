@@ -6587,6 +6587,27 @@ RilObject.prototype[REQUEST_VOICE_RADIO_TECH] = function REQUEST_VOICE_RADIO_TEC
   let radioTech = this.context.Buf.readInt32List();
   this._processRadioTech(radioTech[0]);
 };
+RilObject.prototype[REQUEST_GET_CELL_INFO_LIST] = null;
+RilObject.prototype[REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE] = null;
+RilObject.prototype[REQUEST_SET_INITIAL_ATTACH_APN] = null;
+RilObject.prototype[REQUEST_IMS_REGISTRATION_STATE] = null;
+RilObject.prototype[REQUEST_IMS_SEND_SMS] = null;
+RilObject.prototype[REQUEST_SIM_TRANSMIT_APDU_BASIC] = null;
+RilObject.prototype[REQUEST_SIM_OPEN_CHANNEL] = null;
+RilObject.prototype[REQUEST_SIM_CLOSE_CHANNEL] = null;
+RilObject.prototype[REQUEST_SIM_TRANSMIT_APDU_CHANNEL] = null;
+RilObject.prototype[REQUEST_NV_READ_ITEM] = null;
+RilObject.prototype[REQUEST_NV_WRITE_ITEM] = null;
+RilObject.prototype[REQUEST_NV_WRITE_CDMA_PRL] = null;
+RilObject.prototype[REQUEST_NV_RESET_CONFIG] = null;
+RilObject.prototype[REQUEST_SET_UICC_SUBSCRIPTION] = null;
+RilObject.prototype[REQUEST_ALLOW_DATA] = null;
+RilObject.prototype[REQUEST_GET_HARDWARE_CONFIG] = null;
+RilObject.prototype[REQUEST_SIM_AUTHENTICATION] = null;
+RilObject.prototype[REQUEST_GET_DC_RT_INFO] = null;
+RilObject.prototype[REQUEST_SET_DC_RT_INFO_RATE] = null;
+RilObject.prototype[REQUEST_SET_DATA_PROFILE] = null;
+RilObject.prototype[REQUEST_SHUTDOWN] = null;
 RilObject.prototype[REQUEST_SET_UICC_SUBSCRIPTION] = function REQUEST_SET_UICC_SUBSCRIPTION(length, options) {
   // Resend data subscription after uicc subscription.
   if (this._attachDataRegistration) {
@@ -6976,6 +6997,12 @@ RilObject.prototype[UNSOLICITED_RIL_CONNECTED] = function UNSOLICITED_RIL_CONNEC
   this.setRadioEnabled({enabled: false});
 };
 RilObject.prototype[UNSOLICITED_VOICE_RADIO_TECH_CHANGED] = null;
+RilObject.prototype[UNSOLICITED_CELL_INFO_LIST] = null;
+RilObject.prototype[UNSOLICITED_RESPONSE_IMS_NETWORK_STATE_CHANGED] = null;
+RilObject.prototype[UNSOLICITED_UICC_SUBSCRIPTION_STATUS_CHANGED] = null;
+RilObject.prototype[UNSOLICITED_SRVCC_STATE_NOTIFY] = null;
+RilObject.prototype[UNSOLICITED_HARDWARE_CONFIG_CHANGED] = null;
+RilObject.prototype[UNSOLICITED_DC_RT_INFO_CHANGED] = null;
 
 /**
  * This object exposes the functionality to parse and serialize PDU strings
