@@ -1457,10 +1457,6 @@ RilObject.prototype = {
    * Open Logical UICC channel (aid) for Secure Element access
    */
   iccOpenChannel: function(options) {
-    if (DEBUG) {
-      this.context.debug("iccOpenChannel: " + JSON.stringify(options));
-    }
-
     let Buf = this.context.Buf;
     Buf.newParcel(REQUEST_SIM_OPEN_CHANNEL, options);
     Buf.writeString(options.aid);
@@ -1471,31 +1467,15 @@ RilObject.prototype = {
    * Exchange APDU data on an open Logical UICC channel
    */
   iccExchangeAPDU: function(options) {
-    if (DEBUG) this.context.debug("iccExchangeAPDU: " + JSON.stringify(options));
-
-    let cla = options.apdu.cla;
-    let command = options.apdu.command;
-    let channel = options.channel;
-    let path = options.apdu.path || "";
-    let data = options.apdu.data || "";
-    let data2 = options.apdu.data2 || "";
-
-    let p1 = options.apdu.p1;
-    let p2 = options.apdu.p2;
-    let p3 = options.apdu.p3; // Extra
-
     let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_SIM_ACCESS_CHANNEL, options);
-    Buf.writeInt32(cla);
-    Buf.writeInt32(command);
-    Buf.writeInt32(channel);
-    Buf.writeString(path); // path
-    Buf.writeInt32(p1);
-    Buf.writeInt32(p2);
-    Buf.writeInt32(p3);
-    Buf.writeString(data); // generic data field.
-    Buf.writeString(data2);
-
+    Buf.newParcel(REQUEST_SIM_TRANSMIT_APDU_CHANNEL, options);
+    Buf.writeInt32(options.channel);
+    Buf.writeInt32(options.apdu.cla);
+    Buf.writeInt32(options.apdu.command);
+    Buf.writeInt32(options.apdu.p1);
+    Buf.writeInt32(options.apdu.p2);
+    Buf.writeInt32(options.apdu.p3);
+    Buf.writeString(options.apdu.data);
     Buf.sendParcel();
   },
 
@@ -1503,8 +1483,6 @@ RilObject.prototype = {
    * Close Logical UICC channel
    */
   iccCloseChannel: function(options) {
-    if (DEBUG) this.context.debug("iccCloseChannel: " + JSON.stringify(options));
-
     let Buf = this.context.Buf;
     Buf.newParcel(REQUEST_SIM_CLOSE_CHANNEL, options);
     Buf.writeInt32(1);
