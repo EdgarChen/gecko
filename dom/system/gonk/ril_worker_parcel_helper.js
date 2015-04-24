@@ -43,6 +43,35 @@
     },
   };
 
+  /**
+   * Documentation ....
+   *
+   * Set the preferred network type.
+   *
+   * options:
+   *   An object contains a valid value of
+   *   RIL_PREFERRED_NETWORK_TYPE_TO_GECKO as its `type` attribute.
+   *
+   * response:
+   *   null
+   */
+  ParcelHelperObject.prototype.setPreferredNetworkType = function(aOptions, aCallback) {
+    let networkType = aOptions.type;
+    if (networkType < 0 || networkType >= RIL_PREFERRED_NETWORK_TYPE_TO_GECKO.length) {
+      aCallback({errorMsg: GECKO_ERROR_INVALID_PARAMETER});
+      return;
+    }
+
+    let Buf = this.context.Buf;
+    Buf.newParcel(REQUEST_SET_PREFERRED_NETWORK_TYPE, aOptions, (aLength, aOptions) => {
+      aCallback(aOptions);
+    });
+
+    Buf.writeInt32(1);
+    Buf.writeInt32(networkType);
+    Buf.sendParcel();
+  };
+
   // Solicited parcels.
   //ParcelHelperObject.prototype.foo = function ....
 
