@@ -38,6 +38,7 @@
 
 /* global BufObject */
 /* global TelephonyRequestQueue */
+/* global ParcelHelperObject */
 
 "use strict";
 
@@ -45,6 +46,7 @@ importScripts("ril_consts.js");
 importScripts("resource://gre/modules/workers/require.js");
 importScripts("ril_worker_buf_object.js");
 importScripts("ril_worker_telephony_request_queue.js");
+importScripts("ril_worker_parcel_helper.js");
 
 // set to true in ril_consts.js to see debug messages
 let DEBUG = DEBUG_WORKER;
@@ -3888,14 +3890,14 @@ RilObject.prototype = {
       this.context.debug("Received chrome message " + JSON.stringify(message));
     }
     let method = this[message.rilMessageType];
-    if (typeof method != "function") {
-      if (DEBUG) {
-        this.context.debug("Don't know what to do with message " +
-                           JSON.stringify(message));
-      }
+    if (typeof method === "function") {
+      method.call(this, message);
       return;
     }
-    method.call(this, message);
+
+    this.context.ParcelHelper.send(message.rilMessageType, message, (options) => {
+      this.sendChromeMessage(options);
+    });
   },
 
   /**
@@ -14745,6 +14747,7 @@ Context.prototype = {
     "ICCFileHelper", "ICCIOHelper", "ICCPDUHelper", "ICCRecordHelper",
     "ICCUtilsHelper", "RuimRecordHelper", "SimRecordHelper",
     "StkCommandParamsFactory", "StkProactiveCmdHelper", "IconLoader",
+    "ParcelHelper",
   ];
 
   for (let i = 0; i < lazySymbols.length; i++) {

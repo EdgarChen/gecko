@@ -67,8 +67,8 @@
       let token = this.readInt32();
       let error = this.readInt32();
 
-      options = this.mTokenRequestMap.get(token);
-      if (!options) {
+      let request = this.mTokenRequestMap.get(token);
+      if (!request) {
         if (DEBUG) {
           this.context.debug("Suspicious uninvited request found: " +
                              token + ". Ignored!");
@@ -77,7 +77,8 @@
       }
 
       this.mTokenRequestMap.delete(token);
-      requestType = options.rilRequestType;
+      options = request.options;
+      requestType = request.type;
 
       if (error !== ERROR_SUCCESS) {
         options.errorMsg = RIL_ERROR_TO_GECKO_ERROR[error] ||
@@ -87,11 +88,20 @@
         this.context.debug("Solicited response for request type " + requestType +
                            ", token " + token + ", error " + error);
       }
+
+      if (request.callback) {
+        // New solicited response handler
+        request.callback(this.readAvailable, options);
+        return;
+      }
     } else if (responseType == RESPONSE_TYPE_UNSOLICITED) {
       requestType = this.readInt32();
       if (DEBUG) {
         this.context.debug("Unsolicited response for request type " + requestType);
       }
+
+      // New unsolicited response handler.
+      this.context.ParcelHelper.onReceive(requestType, this.readAvailable);
     } else {
       if (DEBUG) {
         this.context.debug("Unknown response type: " + responseType);
@@ -111,7 +121,7 @@
    *        Object containing information about the request, e.g. the
    *        original main thread message object that led to the RIL request.
    */
-  BufObject.prototype.newParcel = function(type, options) {
+  BufObject.prototype.newParcel = function(type, options, callback) {
     if (DEBUG) {
       this.context.debug("New outgoing parcel of type " + type);
     }
@@ -121,17 +131,14 @@
     this.writeInt32(this._reMapRequestType(type));
     this.writeInt32(this.mToken);
 
-    if (!options) {
-      options = {};
-    }
-    options.rilRequestType = type;
-    this.mTokenRequestMap.set(this.mToken, options);
+    this.mTokenRequestMap.set(this.mToken, {type: type,
+                                            options: options || {},
+                                            callback: callback});
     this.mToken++;
-    return this.mToken;
   };
 
-  BufObject.prototype.simpleRequest = function(type, options) {
-    this.newParcel(type, options);
+  BufObject.prototype.simpleRequest = function(type, options, callback) {
+    this.newParcel(type, options, callback);
     this.sendParcel();
   };
 
