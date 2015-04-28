@@ -988,13 +988,6 @@ RilObject.prototype = {
   },
 
   /**
-   * Get the preferred network type.
-   */
-  getPreferredNetworkType: function(options) {
-    this.context.Buf.simpleRequest(REQUEST_GET_PREFERRED_NETWORK_TYPE, options);
-  },
-
-  /**
    * Request neighboring cell ids in GSM network.
    */
   getNeighboringCellIds: function(options) {
@@ -4662,15 +4655,6 @@ RilObject.prototype[REQUEST_STK_SEND_ENVELOPE_COMMAND] = null;
 RilObject.prototype[REQUEST_STK_SEND_TERMINAL_RESPONSE] = null;
 RilObject.prototype[REQUEST_STK_HANDLE_CALL_SETUP_REQUESTED_FROM_SIM] = null;
 RilObject.prototype[REQUEST_EXPLICIT_CALL_TRANSFER] = null;
-RilObject.prototype[REQUEST_GET_PREFERRED_NETWORK_TYPE] = function REQUEST_GET_PREFERRED_NETWORK_TYPE(length, options) {
-  if (options.errorMsg) {
-    this.sendChromeMessage(options);
-    return;
-  }
-
-  options.type = this.context.Buf.readInt32List()[0];
-  this.sendChromeMessage(options);
-};
 RilObject.prototype[REQUEST_GET_NEIGHBORING_CELL_IDS] = function REQUEST_GET_NEIGHBORING_CELL_IDS(length, options) {
   if (options.errorMsg) {
     this.sendChromeMessage(options);

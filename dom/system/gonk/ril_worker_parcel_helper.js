@@ -72,6 +72,30 @@
     Buf.sendParcel();
   };
 
+  /**
+   * Documentation ....
+   *
+   * Get the preferred network type.
+   *
+   * options:
+   *   null
+   *
+   * response:
+   *   null
+   */
+  ParcelHelperObject.prototype.getPreferredNetworkType = function(aOptions, aCallback) {
+    let Buf = this.context.Buf;
+    Buf.simpleRequest(REQUEST_GET_PREFERRED_NETWORK_TYPE, aOptions, (aLength, aOptions) => {
+      if (aOptions.errorMsg) {
+        aCallback(aOptions);
+        return;
+      }
+
+      aOptions.type = Buf.readInt32List()[0];
+      aCallback(aOptions);
+    });
+  };
+
   // Solicited parcels.
   //ParcelHelperObject.prototype.foo = function ....
 
