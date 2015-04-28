@@ -46,6 +46,63 @@
   /**
    * Documentation ....
    *
+   * Get iccStatus.
+   *
+   * options:
+   *   null
+   *
+   * response:
+   *   iccStatus
+   */
+  ParcelHelperObject.prototype.getIccStatus = function(aOptions, aCallback) {
+    let Buf = this.context.Buf;
+    Buf.simpleRequest(REQUEST_GET_SIM_STATUS, aOptions, (aLength, aOptions) => {
+      if (aOptions.errorMsg) {
+        aCallback({errorMsg: aOptions.errorMsg});
+        return;
+      }
+
+      let iccStatus = {};
+      iccStatus.cardState = Buf.readInt32(); // CARD_STATE_*
+      iccStatus.universalPINState = Buf.readInt32(); // CARD_PINSTATE_*
+      iccStatus.gsmUmtsSubscriptionAppIndex = Buf.readInt32();
+      iccStatus.cdmaSubscriptionAppIndex = Buf.readInt32();
+      if (!this.v5Legacy) {
+        iccStatus.imsSubscriptionAppIndex = Buf.readInt32();
+      }
+
+      let apps_length = Buf.readInt32();
+      if (apps_length > CARD_MAX_APPS) {
+        apps_length = CARD_MAX_APPS;
+      }
+
+      iccStatus.apps = [];
+      for (let i = 0 ; i < apps_length ; i++) {
+        iccStatus.apps.push({
+          app_type:       Buf.readInt32(), // CARD_APPTYPE_*
+          app_state:      Buf.readInt32(), // CARD_APPSTATE_*
+          perso_substate: Buf.readInt32(), // CARD_PERSOSUBSTATE_*
+          aid:            Buf.readString(),
+          app_label:      Buf.readString(),
+          pin1_replaced:  Buf.readInt32(),
+          pin1:           Buf.readInt32(),
+          pin2:           Buf.readInt32()
+        });
+        if (RILQUIRKS_SIM_APP_STATE_EXTRA_FIELDS) {
+          Buf.readInt32();
+          Buf.readInt32();
+          Buf.readInt32();
+          Buf.readInt32();
+        }
+      }
+
+      aCallback({iccStatus: iccStatus});
+    });
+  };
+
+  /**
+   * Documentation ....
+   *
    * Set the preferred network type.
    *
    * options:

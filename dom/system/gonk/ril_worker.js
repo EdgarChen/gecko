@@ -317,7 +317,15 @@ RilObject.prototype = {
    * Retrieve the ICC's status.
    */
   getICCStatus: function() {
-    this.context.Buf.simpleRequest(REQUEST_GET_SIM_STATUS);
+    this.context.ParcelHelper.send("getIccStatus", null, (response) => {
+      if (response.errorMsg) {
+        return;
+      }
+
+      let iccStatus = response.iccStatus;
+      if (DEBUG) this.context.debug("iccStatus: " + JSON.stringify(iccStatus));
+      this._processICCStatus(iccStatus);
+    });
   },
 
   /**
@@ -3958,49 +3966,6 @@ RilObject.prototype = {
   }
 };
 
-RilObject.prototype[REQUEST_GET_SIM_STATUS] = function REQUEST_GET_SIM_STATUS(length, options) {
-  if (options.errorMsg) {
-    return;
-  }
-
-  let iccStatus = {};
-  let Buf = this.context.Buf;
-  iccStatus.cardState = Buf.readInt32(); // CARD_STATE_*
-  iccStatus.universalPINState = Buf.readInt32(); // CARD_PINSTATE_*
-  iccStatus.gsmUmtsSubscriptionAppIndex = Buf.readInt32();
-  iccStatus.cdmaSubscriptionAppIndex = Buf.readInt32();
-  if (!this.v5Legacy) {
-    iccStatus.imsSubscriptionAppIndex = Buf.readInt32();
-  }
-
-  let apps_length = Buf.readInt32();
-  if (apps_length > CARD_MAX_APPS) {
-    apps_length = CARD_MAX_APPS;
-  }
-
-  iccStatus.apps = [];
-  for (let i = 0 ; i < apps_length ; i++) {
-    iccStatus.apps.push({
-      app_type:       Buf.readInt32(), // CARD_APPTYPE_*
-      app_state:      Buf.readInt32(), // CARD_APPSTATE_*
-      perso_substate: Buf.readInt32(), // CARD_PERSOSUBSTATE_*
-      aid:            Buf.readString(),
-      app_label:      Buf.readString(),
-      pin1_replaced:  Buf.readInt32(),
-      pin1:           Buf.readInt32(),
-      pin2:           Buf.readInt32()
-    });
-    if (RILQUIRKS_SIM_APP_STATE_EXTRA_FIELDS) {
-      Buf.readInt32();
-      Buf.readInt32();
-      Buf.readInt32();
-      Buf.readInt32();
-    }
-  }
-
-  if (DEBUG) this.context.debug("iccStatus: " + JSON.stringify(iccStatus));
-  this._processICCStatus(iccStatus);
-};
 RilObject.prototype[REQUEST_ENTER_SIM_PIN] = function REQUEST_ENTER_SIM_PIN(length, options) {
   this._processEnterAndChangeICCResponses(length, options);
 };
