@@ -844,8 +844,6 @@ TelephonyService.prototype = {
    *        Parsed MMI structure.
    * @param aCallback
    *        A nsITelephonyDialCallback object.
-   * @param aStartNewSession
-   *        True to start a new session for ussd request.
    */
   _dialMMI: function(aClientId, aMmi, aCallback) {
     let mmiServiceCode = aMmi ?
@@ -853,6 +851,22 @@ TelephonyService.prototype = {
 
     aCallback.notifyDialMMI(mmiServiceCode);
 
+    // We check if the MMI service code is supported and in that case we
+    // trigger the appropriate RIL request if possible.
+    switch (mmiServiceCode) {
+      // Call Forwarding
+      case RIL.MMI_KS_SC_CALL_FORWARDING:
+        this._callForwardingMMI(aClientId, aMmi, aCallback);
+        break;
+
+      // Fall back to "sendMMI".
+      default:
+        this._sendMMI(aClientId, aMmi, aCallback);
+        break;
+    }
+  },
+
+  _sendMMI: function(aClientId, aMmi, aCallback) {
     this._sendToRilWorker(aClientId, "sendMMI",
                           { mmi: aMmi }, response => {
       if (DEBUG) debug("MMI response: " + JSON.stringify(response));
@@ -874,28 +888,6 @@ TelephonyService.prototype = {
           !response.statusMessage) {
         aCallback.notifyDialMMIError(RIL.GECKO_ERROR_GENERIC_FAILURE);
         return;
-      }
-
-      // MMI query call forwarding options request returns a set of rules that
-      // will be exposed in the form of an array of MozCallForwardingOptions
-      // instances.
-      if (mmiServiceCode === RIL.MMI_KS_SC_CALL_FORWARDING) {
-        if (response.isSetCallForward) {
-          gGonkMobileConnectionService.notifyCFStateChanged(aClientId,
-                                                            response.action,
-                                                            response.reason,
-                                                            response.number,
-                                                            response.timeSeconds,
-                                                            response.serviceClass);
-        }
-
-        if (response.additionalInformation != null) {
-          let callForwardingOptions =
-            this._rulesToCallForwardingOptions(response.additionalInformation);
-          aCallback.notifyDialMMISuccessWithCallForwardingOptions(
-            response.statusMessage, callForwardingOptions.length, callForwardingOptions);
-          return;
-        }
       }
 
       // No additional information
@@ -921,6 +913,84 @@ TelephonyService.prototype = {
 
       aCallback.notifyDialMMISuccess(response.statusMessage);
     });
+  },
+
+  /**
+   * Handle call forwarding MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _callForwardingMMI: function(aClientId, aMmi, aCallback) {
+    if (!this._isRadioOn(aClientId)) {
+      aCallback.notifyDialMMIError(RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE);
+      return;
+    }
+
+    let options = {
+      action: RIL.MMI_PROC_TO_CF_ACTION[aMmi.procedure],
+      reason: RIL.MMI_SC_TO_CF_REASON[aMmi.serviceCode],
+      number: aMmi.sia,
+      serviceClass: this._siToServiceClass(aMmi.sib),
+    };
+
+    if (options.action === RIL.CALL_FORWARD_ACTION_QUERY_STATUS) {
+      this._sendToRilWorker(aClientId, "queryCallForwardStatus", options,
+                            aResponse => {
+        if (aResponse.errorMsg) {
+          aCallback.notifyDialMMIError(aResponse.errorMsg);
+          return;
+        }
+
+        // MMI query call forwarding options request returns a set of rules that
+        // will be exposed in the form of an array of MozCallForwardingOptions
+        // instances.
+        let callForwardingOptions =
+          this._rulesToCallForwardingOptions(aResponse.rules);
+        aCallback.notifyDialMMISuccessWithCallForwardingOptions(
+          RIL.MMI_SM_KS_SERVICE_INTERROGATED,
+          callForwardingOptions.length,
+          callForwardingOptions);
+      });
+    } else {
+      options.timeSeconds = aMmi.sic;
+      this._sendToRilWorker(aClientId, "setCallForward", options,
+                            aResponse => {
+        if (aResponse.errorMsg) {
+          aCallback.notifyDialMMIError(aResponse.errorMsg);
+          return;
+        }
+
+        gGonkMobileConnectionService.notifyCFStateChanged(aClientId,
+                                                          options.action,
+                                                          options.reason,
+                                                          options.number,
+                                                          options.timeSeconds,
+                                                          options.serviceClass);
+
+        let statusMessage;
+        switch (options.action) {
+          case RIL.CALL_FORWARD_ACTION_ENABLE:
+            statusMessage = RIL.MMI_SM_KS_SERVICE_ENABLED;
+            break;
+          case RIL.CALL_FORWARD_ACTION_DISABLE:
+            statusMessage = RIL.MMI_SM_KS_SERVICE_DISABLED;
+            break;
+          case RIL.CALL_FORWARD_ACTION_REGISTRATION:
+            statusMessage = RIL.MMI_SM_KS_SERVICE_REGISTERED;
+            break;
+          case RIL.CALL_FORWARD_ACTION_ERASURE:
+            statusMessage = RIL.MMI_SM_KS_SERVICE_ERASED;
+            break;
+        }
+
+        aCallback.notifyDialMMISuccess(statusMessage);
+      });
+    }
   },
 
   _serviceCodeToKeyString: function(aServiceCode) {
@@ -961,6 +1031,44 @@ TelephonyService.prototype = {
         return RIL.MMI_KS_SC_CHANGE_PASSWORD;
       default:
         return RIL.MMI_KS_SC_USSD;
+    }
+  },
+
+  /**
+   * Helper for translating basic service group to service class parameter.
+   */
+  _siToServiceClass: function(aSi) {
+    if (!aSi) {
+      return RIL.ICC_SERVICE_CLASS_NONE;
+    }
+
+    let serviceCode = parseInt(aSi, 10);
+    switch (serviceCode) {
+      case 10:
+        return RIL.ICC_SERVICE_CLASS_SMS + RIL.ICC_SERVICE_CLASS_FAX  +
+               RIL.ICC_SERVICE_CLASS_VOICE;
+      case 11:
+        return RIL.ICC_SERVICE_CLASS_VOICE;
+      case 12:
+        return RIL.ICC_SERVICE_CLASS_SMS + RIL.ICC_SERVICE_CLASS_FAX;
+      case 13:
+        return RIL.ICC_SERVICE_CLASS_FAX;
+      case 16:
+        return RIL.ICC_SERVICE_CLASS_SMS;
+      case 19:
+        return RIL.ICC_SERVICE_CLASS_FAX + RIL.ICC_SERVICE_CLASS_VOICE;
+      case 21:
+        return RIL.ICC_SERVICE_CLASS_PAD + RIL.ICC_SERVICE_CLASS_DATA_ASYNC;
+      case 22:
+        return RIL.ICC_SERVICE_CLASS_PACKET + RIL.ICC_SERVICE_CLASS_DATA_SYNC;
+      case 25:
+        return RIL.ICC_SERVICE_CLASS_DATA_ASYNC;
+      case 26:
+        return RIL.ICC_SERVICE_CLASS_DATA_SYNC + RIL.ICC_SERVICE_CLASS_VOICE;
+      case 99:
+        return RIL.ICC_SERVICE_CLASS_PACKET;
+      default:
+        return RIL.ICC_SERVICE_CLASS_NONE;
     }
   },
 
