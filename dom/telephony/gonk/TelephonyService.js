@@ -54,6 +54,19 @@ const DIAL_ERROR_RADIO_NOT_AVAILABLE = RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE;
 
 const TONES_GAP_DURATION = 70;
 
+/* Consts for MMI */
+const MMI_SC_TO_LOCK_TYPE = {};
+MMI_SC_TO_LOCK_TYPE[RIL.MMI_SC_PIN] = RIL.GECKO_CARDLOCK_PIN;
+MMI_SC_TO_LOCK_TYPE[RIL.MMI_SC_PIN2] = RIL.GECKO_CARDLOCK_PIN2;
+MMI_SC_TO_LOCK_TYPE[RIL.MMI_SC_PUK] = RIL.GECKO_CARDLOCK_PUK;
+MMI_SC_TO_LOCK_TYPE[RIL.MMI_SC_PUK2] = RIL.GECKO_CARDLOCK_PUK2;
+
+const MMI_SC_TO_STATUS_MESSAGE = {};
+MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PIN] = RIL.MMI_SM_KS_PIN_CHANGED;
+MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PIN2] = RIL.MMI_SM_KS_PIN2_CHANGED;
+MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PUK] = RIL.MMI_SM_KS_PIN_UNBLOCKED;
+MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PUK2] = RIL.MMI_SM_KS_PIN2_UNBLOCKED;
+
 let DEBUG;
 function debug(s) {
   dump("TelephonyService: " + s + "\n");
@@ -859,6 +872,20 @@ TelephonyService.prototype = {
         this._callForwardingMMI(aClientId, aMmi, aCallback);
         break;
 
+      // Change the current ICC PIN number.
+      case RIL.MMI_KS_SC_PIN:
+      // Change the current ICC PIN2 number.
+      case RIL.MMI_KS_SC_PIN2:
+        this._iccChangeLockMMI(aClientId, aMmi, aCallback);
+        break;
+
+      // Unblock ICC PUK.
+      case RIL.MMI_KS_SC_PUK:
+      // Unblock ICC PUN2.
+      case RIL.MMI_KS_SC_PUK2:
+        this._iccUnlockMMI(aClientId, aMmi, aCallback);
+        break;
+
       // Fall back to "sendMMI".
       default:
         this._sendMMI(aClientId, aMmi, aCallback);
@@ -993,6 +1020,108 @@ TelephonyService.prototype = {
     }
   },
 
+  /**
+   * Handle icc change lock MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _iccChangeLockMMI: function(aClientId, aMmi, aCallback) {
+    if (!this._isRadioOn(aClientId)) {
+      aCallback.notifyDialMMIError(RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE);
+      return;
+    }
+
+    let errorMsg = this._getIccLockMMIError(aMmi);
+    if (errorMsg) {
+      aCallback.notifyDialMMIError(errorMsg);
+      return;
+    }
+
+    let options = {
+      lockType: MMI_SC_TO_LOCK_TYPE[aMmi.serviceCode],
+      password: aMmi.sia,
+      newPassword: aMmi.sib,
+    };
+
+    this._sendToRilWorker(aClientId, "iccChangeCardLockPassword", options,
+                          aResponse => {
+      if (aResponse.errorMsg) {
+        let errorMsg = aResponse.errorMsg;
+
+        if (aResponse.retryCount <= 0) {
+          if (aMmi.serviceCode === RIL.MMI_SC_PIN) {
+            errorMsg = RIL.MMI_ERROR_KS_NEEDS_PUK;
+          }
+
+          aCallback.notifyDialMMIError(errorMsg);
+          return;
+        }
+
+        aCallback.notifyDialMMIErrorWithInfo(RIL.MMI_ERROR_KS_BAD_PIN,
+                                             aResponse.retryCount);
+        return;
+      }
+
+      aCallback.notifyDialMMISuccess(MMI_SC_TO_STATUS_MESSAGE[aMmi.serviceCode]);
+    });
+  },
+
+  /**
+   * Handle icc unlock lock MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _iccUnlockMMI: function(aClientId, aMmi, aCallback) {
+    if (!this._isRadioOn(aClientId)) {
+      aCallback.notifyDialMMIError(RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE);
+      return;
+    }
+
+    let errorMsg = this._getIccLockMMIError(aMmi);
+    if (errorMsg) {
+      aCallback.notifyDialMMIError(errorMsg);
+      return;
+    }
+
+    let options = {
+      lockType: MMI_SC_TO_LOCK_TYPE[aMmi.serviceCode],
+      password: aMmi.sia,
+      newPin: aMmi.sib,
+    };
+
+    this._sendToRilWorker(aClientId, "iccUnlockCardLock", options,
+                          aResponse => {
+      if (aResponse.errorMsg) {
+        let errorMsg = aResponse.errorMsg;
+
+        if (aResponse.retryCount <= 0) {
+          if (aMmi.serviceCode === RIL.MMI_SC_PUK) {
+            errorMsg = RIL.MMI_ERROR_KS_SIM_BLOCKED;
+          }
+
+          aCallback.notifyDialMMIError(errorMsg);
+          return;
+        }
+
+        aCallback.notifyDialMMIErrorWithInfo(RIL.MMI_ERROR_KS_BAD_PUK,
+                                             aResponse.retryCount);
+        return;
+      }
+
+      aCallback.notifyDialMMISuccess(MMI_SC_TO_STATUS_MESSAGE[aMmi.serviceCode]);
+    });
+  },
+
   _serviceCodeToKeyString: function(aServiceCode) {
     switch (aServiceCode) {
       case RIL.MMI_SC_CFU:
@@ -1070,6 +1199,32 @@ TelephonyService.prototype = {
       default:
         return RIL.ICC_SERVICE_CLASS_NONE;
     }
+  },
+
+  _getIccLockMMIError: function(aMmi) {
+    // As defined in TS.122.030 6.6.2 to change the ICC PIN we should expect
+    // an MMI code of the form **04*OLD_PIN*NEW_PIN*NEW_PIN#, where old PIN
+    // should be entered as the SIA parameter and the new PIN as SIB and
+    // SIC.
+    if (aMmi.procedure !== RIL.MMI_PROCEDURE_REGISTRATION) {
+      return RIL.MMI_ERROR_KS_INVALID_ACTION;
+    }
+
+    if (!aMmi.sia || !aMmi.sib || !aMmi.sic) {
+      return RIL.MMI_ERROR_KS_ERROR;
+    }
+
+    if (aMmi.sia.length < 4 || aMmi.sia.length > 8 ||
+        aMmi.sib.length < 4 || aMmi.sib.length > 8 ||
+        aMmi.sic.length < 4 || aMmi.sic.length > 8) {
+      return RIL.MMI_ERROR_KS_INVALID_PIN;
+    }
+
+    if (aMmi.sib != aMmi.sic) {
+      return RIL.MMI_ERROR_KS_MISMATCH_PIN;
+    }
+
+    return null;
   },
 
   /**
