@@ -1880,48 +1880,6 @@ RilObject.prototype = {
     this.context.Buf.simpleRequest(REQUEST_LAST_CALL_FAIL_CAUSE, options);
   },
 
-  sendMMI: function(options) {
-    if (DEBUG) {
-      this.context.debug("SendMMI " + JSON.stringify(options));
-    }
-
-    let _sendMMIError = (function(errorMsg) {
-      options.errorMsg = errorMsg;
-      this.sendChromeMessage(options);
-    }).bind(this);
-
-    // It's neither a valid mmi code nor an ongoing ussd.
-    let mmi = options.mmi;
-    if (!mmi && !this._ussdSession) {
-      _sendMMIError(MMI_ERROR_KS_ERROR);
-      return;
-    }
-
-    let _isRadioAvailable = (function() {
-      if (this.radioState !== GECKO_RADIOSTATE_ENABLED) {
-        _sendMMIError(GECKO_ERROR_RADIO_NOT_AVAILABLE);
-        return false;
-      }
-      return true;
-    }).bind(this);
-
-    // If the MMI code is not a known code, it is treated as an ussd.
-    if (!_isRadioAvailable()) {
-      return;
-    }
-
-    options.ussd = mmi.fullMMI;
-
-    if (this._ussdSession) {
-      if (DEBUG) this.context.debug("Cancel existing ussd session.");
-      this.cachedUSSDRequest = options;
-      this.cancelUSSD({});
-      return;
-    }
-
-    this.sendUSSD(options, false);
-  },
-
   /**
    * Cache the request for send out a new ussd when there is an existing
    * session. We should do cancelUSSD first.
@@ -1934,10 +1892,15 @@ RilObject.prototype = {
    * @param ussd
    *        String containing the USSD code.
    */
-  sendUSSD: function(options, checkSession = true) {
-    if (checkSession && !this._ussdSession) {
+  sendUSSD: function(options) {
+    if (options.checkSession && !this._ussdSession) {
       options.errorMsg = GECKO_ERROR_GENERIC_FAILURE;
       this.sendChromeMessage(options);
+      return;
+    } else {
+      if (DEBUG) this.context.debug("Cancel existing ussd session.");
+      this.cachedUSSDRequest = options;
+      this.cancelUSSD({});
       return;
     }
 

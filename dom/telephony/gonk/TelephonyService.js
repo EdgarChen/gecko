@@ -930,51 +930,25 @@ TelephonyService.prototype = {
         this._callWaitingMMI(aClientId, aMmi, aCallback);
         break;
 
-      // Fall back to "sendMMI".
+      // Handle unknown MMI code as USSD.
       default:
-        this._sendMMI(aClientId, aMmi, aCallback);
+        if (!this._isRadioOn(aClientId)) {
+          aCallback.notifyDialMMIError(RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE);
+          return;
+        }
+
+        this._sendToRilWorker(aClientId, "sendUSSD",
+                              { ussd: aMmi.fullMMI, checkSession: false },
+                              aResponse => {
+          if (aResponse.errorMsg) {
+            aCallback.notifyDialMMIError(aResponse.errorMsg);
+            return;
+          }
+
+          aCallback.notifyDialMMISuccess("");
+        });
         break;
     }
-  },
-
-  _sendMMI: function(aClientId, aMmi, aCallback) {
-    this._sendToRilWorker(aClientId, "sendMMI",
-                          { mmi: aMmi }, response => {
-      if (DEBUG) debug("MMI response: " + JSON.stringify(response));
-
-      if (response.errorMsg) {
-        if (response.additionalInformation != null) {
-          aCallback.notifyDialMMIErrorWithInfo(response.errorMsg,
-                                               response.additionalInformation);
-        } else {
-          aCallback.notifyDialMMIError(response.errorMsg);
-        }
-        return;
-      }
-
-      // No additional information
-      if (response.additionalInformation === undefined) {
-        aCallback.notifyDialMMISuccess(response.statusMessage);
-        return;
-      }
-
-      // Additional information is an integer.
-      if (!isNaN(parseInt(response.additionalInformation, 10))) {
-        aCallback.notifyDialMMISuccessWithInteger(
-          response.statusMessage, response.additionalInformation);
-        return;
-      }
-
-      // Additional information is an array of strings.
-      let array = response.additionalInformation;
-      if (Array.isArray(array) && array.length > 0 && typeof array[0] === "string") {
-        aCallback.notifyDialMMISuccessWithStrings(response.statusMessage,
-                                                  array.length, array);
-        return;
-      }
-
-      aCallback.notifyDialMMISuccess(response.statusMessage);
-    });
   },
 
   /**
@@ -2063,7 +2037,7 @@ TelephonyService.prototype = {
   },
 
   sendUSSD: function(aClientId, aUssd, aCallback) {
-    this._sendToRilWorker(aClientId, "sendUSSD", { ussd: aUssd },
+    this._sendToRilWorker(aClientId, "sendUSSD", { ussd: aUssd, checkSession: true },
                           this._defaultCallbackHandler.bind(this, aCallback));
   },
 
