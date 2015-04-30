@@ -925,6 +925,11 @@ TelephonyService.prototype = {
         this._callBarringMMI(aClientId, aMmi, aCallback);
         break;
 
+      // Call waiting
+      case RIL.MMI_KS_SC_CALL_WAITING:
+        this._callWaitingMMI(aClientId, aMmi, aCallback);
+        break;
+
       // Fall back to "sendMMI".
       default:
         this._sendMMI(aClientId, aMmi, aCallback);
@@ -1439,6 +1444,72 @@ TelephonyService.prototype = {
         options.enabled =
           (aMmi.procedure === RIL.MMI_PROCEDURE_ACTIVATION) ? 1 : 0;
         this._sendToRilWorker(aClientId, "setCallBarring", options,
+                              aResponse => {
+          if (aResponse.errorMsg) {
+            aCallback.notifyDialMMIError(aResponse.errorMsg);
+            return;
+          }
+
+          aCallback.notifyDialMMISuccess(
+            options.enabled ? RIL.MMI_SM_KS_SERVICE_ENABLED
+                            : RIL.MMI_SM_KS_SERVICE_DISABLED
+          );
+        });
+        break;
+      default:
+        aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_NOT_SUPPORTED);
+        break;
+    }
+  },
+
+  /**
+   * Handle call waiting MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _callWaitingMMI: function(aClientId, aMmi, aCallback) {
+    if (!this._isRadioOn(aClientId)) {
+      aCallback.notifyDialMMIError(RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE);
+      return;
+    }
+
+    switch (aMmi.procedure) {
+      case RIL.MMI_PROCEDURE_INTERROGATION:
+        this._sendToRilWorker(aClientId, "queryCallWaiting", {}, aResponse => {
+          if (aResponse.errorMsg) {
+            aCallback.notifyDialMMIError(aResponse.errorMsg);
+            return;
+          }
+
+          if (!aResponse.enabled) {
+            aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_SERVICE_DISABLED);
+            return;
+          }
+
+          let services = [];
+          for (let mask = 1; mask <= RIL.ICC_SERVICE_CLASS_MAX; mask <<= 1) {
+            if ((mask & aResponse.serviceClass) !== 0) {
+              services.push(RIL.MMI_KS_SERVICE_CLASS_MAPPING[mask]);
+            }
+          }
+
+          aCallback.notifyDialMMISuccessWithStrings(RIL.MMI_SM_KS_SERVICE_ENABLED_FOR,
+                                                    services.length, services);
+        });
+        break;
+      case RIL.MMI_PROCEDURE_ACTIVATION:
+      case RIL.MMI_PROCEDURE_DEACTIVATION:
+        let options = {
+          enabled: (aMmi.procedure === RIL.MMI_PROCEDURE_ACTIVATION) ? 1 : 0,
+          serviceClass: this._siToServiceClass(aMmi.sia),
+        };
+
+        this._sendToRilWorker(aClientId, "setCallWaiting", options,
                               aResponse => {
           if (aResponse.errorMsg) {
             aCallback.notifyDialMMIError(aResponse.errorMsg);
