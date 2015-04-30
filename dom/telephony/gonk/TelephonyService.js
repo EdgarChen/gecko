@@ -71,6 +71,16 @@ const MMI_PROC_TO_CLIR_ACTION = {};
 MMI_PROC_TO_CLIR_ACTION[RIL.MMI_PROCEDURE_ACTIVATION] = RIL.CLIR_INVOCATION;
 MMI_PROC_TO_CLIR_ACTION[RIL.MMI_PROCEDURE_DEACTIVATION] =  RIL.CLIR_SUPPRESSION;
 
+const MMI_SC_TO_CB_PROGRAM = {};
+MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAOC] = RIL.CALL_BARRING_PROGRAM_ALL_OUTGOING;
+MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAOIC] = RIL.CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL;
+MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAOICxH] = RIL.CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL_EXCEPT_HOME;
+MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAIC] = RIL.CALL_BARRING_PROGRAM_ALL_INCOMING;
+MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAICr] = RIL.CALL_BARRING_PROGRAM_INCOMING_ROAMING;
+MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BA_ALL] = RIL.CALL_BARRING_PROGRAM_ALL_SERVICE;
+MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BA_MO] = RIL.CALL_BARRING_PROGRAM_OUTGOING_SERVICE;
+MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BA_MT] = RIL.CALL_BARRING_PROGRAM_INCOMING_SERVICE;
+
 let DEBUG;
 function debug(s) {
   dump("TelephonyService: " + s + "\n");
@@ -910,6 +920,11 @@ TelephonyService.prototype = {
         this._callBarringPasswordMMI(aClientId, aMmi, aCallback);
         break;
 
+      // Call barring
+      case RIL.MMI_KS_SC_CALL_BARRING:
+        this._callBarringMMI(aClientId, aMmi, aCallback);
+        break;
+
       // Fall back to "sendMMI".
       default:
         this._sendMMI(aClientId, aMmi, aCallback);
@@ -1375,6 +1390,71 @@ TelephonyService.prototype = {
 
       aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_PASSWORD_CHANGED);
     });
+  },
+
+  /**
+   * Handle call barring MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _callBarringMMI: function(aClientId, aMmi, aCallback) {
+    let options = {
+      program: MMI_SC_TO_CB_PROGRAM[aMmi.serviceCode],
+      password: aMmi.sia || "",
+      serviceClass: this._siToServiceClass(aMmi.sib),
+    };
+
+    switch (aMmi.procedure) {
+      case RIL.MMI_PROCEDURE_INTERROGATION:
+        this._sendToRilWorker(aClientId, "queryCallBarringStatus", options,
+                              aResponse => {
+          if (aResponse.errorMsg) {
+            aCallback.notifyDialMMIError(aResponse.errorMsg);
+            return;
+          }
+
+          if (!aResponse.enabled) {
+            aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_SERVICE_DISABLED);
+            return;
+          }
+
+          let services = [];
+          for (let mask = 1; mask <= RIL.ICC_SERVICE_CLASS_MAX; mask <<= 1) {
+            if ((mask & aResponse.serviceClass) !== 0) {
+              services.push(RIL.MMI_KS_SERVICE_CLASS_MAPPING[mask]);
+            }
+          }
+
+          aCallback.notifyDialMMISuccessWithStrings(RIL.MMI_SM_KS_SERVICE_ENABLED_FOR,
+                                                    services.length, services)
+        });
+        break;
+      case RIL.MMI_PROCEDURE_ACTIVATION:
+      case RIL.MMI_PROCEDURE_DEACTIVATION:
+        options.enabled =
+          (aMmi.procedure === RIL.MMI_PROCEDURE_ACTIVATION) ? 1 : 0;
+        this._sendToRilWorker(aClientId, "setCallBarring", options,
+                              aResponse => {
+          if (aResponse.errorMsg) {
+            aCallback.notifyDialMMIError(aResponse.errorMsg);
+            return;
+          }
+
+          aCallback.notifyDialMMISuccess(
+            options.enabled ? RIL.MMI_SM_KS_SERVICE_ENABLED
+                            : RIL.MMI_SM_KS_SERVICE_DISABLED
+          );
+        });
+        break;
+      default:
+        aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_NOT_SUPPORTED);
+        break;
+    }
   },
 
   _serviceCodeToKeyString: function(aServiceCode) {
