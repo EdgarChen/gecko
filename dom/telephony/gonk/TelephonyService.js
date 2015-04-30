@@ -67,6 +67,10 @@ MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PIN2] = RIL.MMI_SM_KS_PIN2_CHANGED;
 MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PUK] = RIL.MMI_SM_KS_PIN_UNBLOCKED;
 MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PUK2] = RIL.MMI_SM_KS_PIN2_UNBLOCKED;
 
+const MMI_PROC_TO_CLIR_ACTION = {};
+MMI_PROC_TO_CLIR_ACTION[RIL.MMI_PROCEDURE_ACTIVATION] = RIL.CLIR_INVOCATION;
+MMI_PROC_TO_CLIR_ACTION[RIL.MMI_PROCEDURE_DEACTIVATION] =  RIL.CLIR_SUPPRESSION;
+
 let DEBUG;
 function debug(s) {
   dump("TelephonyService: " + s + "\n");
@@ -896,6 +900,11 @@ TelephonyService.prototype = {
         this._clipMMI(aClientId, aMmi, aCallback);
         break;
 
+      // CLIR (non-temporary ones)
+      case RIL.MMI_KS_SC_CLIR:
+        this._clirMMI(aClientId, aMmi, aCallback);
+        break;
+
       // Fall back to "sendMMI".
       default:
         this._sendMMI(aClientId, aMmi, aCallback);
@@ -1191,6 +1200,121 @@ TelephonyService.prototype = {
           break;
       }
     });
+  },
+
+  /**
+   * Handle CLIR MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _clirMMI: function(aClientId, aMmi, aCallback) {
+    switch (aMmi.procedure) {
+      case RIL.MMI_PROCEDURE_INTERROGATION:
+        this._sendToRilWorker(aClientId, "getCLIR", {}, aResponse => {
+          if (aResponse.errorMsg) {
+            aCallback.notifyDialMMIError(aResponse.errorMsg);
+            return;
+          }
+
+          let errorMsg;
+          let statusMessage;
+          // TS 27.007 +CLIR parameter 'm'.
+          switch (aResponse.m) {
+            // CLIR not provisioned.
+            case 0:
+              statusMessage = RIL.MMI_SM_KS_SERVICE_NOT_PROVISIONED;
+              break;
+            // CLIR provisioned in permanent mode.
+            case 1:
+              statusMessage = RIL.MMI_SM_KS_CLIR_PERMANENT;
+              break;
+            // Unknown (e.g. no network, etc.).
+            case 2:
+              errorMsg = RIL.MMI_ERROR_KS_ERROR;
+              break;
+            // CLIR temporary mode presentation restricted.
+            case 3:
+              // TS 27.007 +CLIR parameter 'n'.
+              switch (aResponse.n) {
+                // Default.
+                case 0:
+                // CLIR invocation.
+                case 1:
+                  statusMessage = RIL.MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_ON;
+                  break;
+                // CLIR suppression.
+                case 2:
+                  statusMessage = RIL.MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_OFF;
+                  break;
+                default:
+                  errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+                  break;
+              }
+              break;
+            // CLIR temporary mode presentation allowed.
+            case 4:
+              // TS 27.007 +CLIR parameter 'n'.
+              switch (aResponse.n) {
+                // Default.
+                case 0:
+                // CLIR suppression.
+                case 2:
+                  statusMessage = RIL.MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_OFF;
+                  break;
+                // CLIR invocation.
+                case 1:
+                  statusMessage = RIL.MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_ON;
+                  break;
+                default:
+                  errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+                  break;
+              }
+              break;
+            default:
+              errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+              break;
+          }
+
+          if (errorMsg) {
+            aCallback.notifyDialMMIError(errorMsg);
+            return;
+          }
+
+          aCallback.notifyDialMMISuccess(statusMessage);
+        });
+        break;
+      case RIL.MMI_PROCEDURE_ACTIVATION:
+      case RIL.MMI_PROCEDURE_DEACTIVATION:
+        let clirMode = MMI_PROC_TO_CLIR_ACTION[aMmi.procedure];
+        this._sendToRilWorker(aClientId, "setCLIR", {clirMode: clirMode},
+                              aResponse => {
+          if (aResponse.errorMsg) {
+            aCallback.notifyDialMMIError(aResponse.errorMsg);
+            return;
+          }
+
+          let statusMessage;
+          switch (aMmi.procedure) {
+            case RIL.MMI_PROCEDURE_ACTIVATION:
+              statusMessage = RIL.MMI_SM_KS_SERVICE_ENABLED;
+              break;
+            case RIL.MMI_PROCEDURE_DEACTIVATION:
+              statusMessage = RIL.MMI_SM_KS_SERVICE_DISABLED;
+              break;
+          }
+
+          aCallback.notifyDialMMISuccess(statusMessage);
+        });
+        break;
+      default:
+        aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_NOT_SUPPORTED);
+        break;
+    }
   },
 
   _serviceCodeToKeyString: function(aServiceCode) {
