@@ -965,7 +965,9 @@ MobileConnectionProvider.prototype = {
         return false;
       }
 
-      aCallback.notifySuccessWithBoolean(aResponse.enabled);
+      aCallback.notifySuccessWithBoolean(
+        aResponse.enabled &&
+        (aResponse.serviceClass & RIL.ICC_SERVICE_CLASS_VOICE) == 0x01);
       return false;
     }).bind(this));
   },
