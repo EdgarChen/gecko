@@ -55,31 +55,161 @@ const DIAL_ERROR_RADIO_NOT_AVAILABLE = RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE;
 const TONES_GAP_DURATION = 70;
 
 /* Consts for MMI */
+// MMI procedure as defined in TS.22.030 6.5.2
+const MMI_PROCEDURE_ACTIVATION = "*";
+const MMI_PROCEDURE_DEACTIVATION = "#";
+const MMI_PROCEDURE_INTERROGATION = "*#";
+const MMI_PROCEDURE_REGISTRATION = "**";
+const MMI_PROCEDURE_ERASURE = "##";
+
+// MMI call forwarding service codes as defined in TS.22.030 Annex B
+const MMI_SC_CFU = "21";
+const MMI_SC_CF_BUSY = "67";
+const MMI_SC_CF_NO_REPLY = "61";
+const MMI_SC_CF_NOT_REACHABLE = "62";
+const MMI_SC_CF_ALL = "002";
+const MMI_SC_CF_ALL_CONDITIONAL = "004";
+
+// MMI service codes for PIN/PIN2/PUK/PUK2 management as defined in TS.22.030
+// sec 6.6
+const MMI_SC_PIN = "04";
+const MMI_SC_PIN2 = "042";
+const MMI_SC_PUK = "05";
+const MMI_SC_PUK2 = "052";
+
+// MMI service code for IMEI presentation as defined in TS.22.030 sec 6.7
+const MMI_SC_IMEI = "06";
+
+// MMI called line presentation service codes
+const MMI_SC_CLIP = "30";
+const MMI_SC_CLIR = "31";
+
+// MMI call waiting service code
+const MMI_SC_CALL_WAITING = "43";
+
+// MMI service code for registration new password as defined in TS 22.030 6.5.4
+const MMI_SC_CHANGE_PASSWORD = "03";
+const MMI_ZZ_BARRING_SERVICE = "330";
+
+// MMI call barring service codes
+const MMI_SC_BAOC = "33";
+const MMI_SC_BAOIC = "331";
+const MMI_SC_BAOICxH = "332";
+const MMI_SC_BAIC = "35";
+const MMI_SC_BAICr = "351";
+const MMI_SC_BA_ALL = "330";
+const MMI_SC_BA_MO = "333";
+const MMI_SC_BA_MT = "353";
+
+// MMI service code key strings.
+const MMI_KS_SC_CALL_BARRING = "scCallBarring";
+const MMI_KS_SC_CALL_FORWARDING = "scCallForwarding";
+const MMI_KS_SC_CLIP = "scClip";
+const MMI_KS_SC_CLIR = "scClir";
+const MMI_KS_SC_PWD = "scPwd";
+const MMI_KS_SC_CALL_WAITING = "scCallWaiting";
+const MMI_KS_SC_PIN = "scPin";
+const MMI_KS_SC_PIN2 = "scPin2";
+const MMI_KS_SC_PUK = "scPuk";
+const MMI_KS_SC_PUK2 = "scPuk2";
+const MMI_KS_SC_CHANGE_PASSWORD = "scChangePassword";
+const MMI_KS_SC_IMEI = "scImei";
+const MMI_KS_SC_USSD = "scUssd";
+const MMI_KS_SC_CALL = "scCall";
+
+// MMI error messages key strings.
+const MMI_ERROR_KS_ERROR = "emMmiError";
+const MMI_ERROR_KS_NOT_SUPPORTED = "emMmiErrorNotSupported";
+const MMI_ERROR_KS_INVALID_ACTION = "emMmiErrorInvalidAction";
+const MMI_ERROR_KS_MISMATCH_PIN = "emMmiErrorMismatchPin";
+const MMI_ERROR_KS_MISMATCH_PASSWORD = "emMmiErrorMismatchPassword";
+const MMI_ERROR_KS_BAD_PIN = "emMmiErrorBadPin";
+const MMI_ERROR_KS_BAD_PUK = "emMmiErrorBadPuk";
+const MMI_ERROR_KS_INVALID_PIN = "emMmiErrorInvalidPin";
+const MMI_ERROR_KS_INVALID_PASSWORD = "emMmiErrorInvalidPassword";
+const MMI_ERROR_KS_NEEDS_PUK = "emMmiErrorNeedsPuk";
+const MMI_ERROR_KS_SIM_BLOCKED = "emMmiErrorSimBlocked";
+
+// MMI status message.
+const MMI_SM_KS_PASSWORD_CHANGED = "smPasswordChanged";
+const MMI_SM_KS_PIN_CHANGED = "smPinChanged";
+const MMI_SM_KS_PIN2_CHANGED = "smPin2Changed";
+const MMI_SM_KS_PIN_UNBLOCKED = "smPinUnblocked";
+const MMI_SM_KS_PIN2_UNBLOCKED = "smPin2Unblocked";
+const MMI_SM_KS_SERVICE_ENABLED = "smServiceEnabled";
+const MMI_SM_KS_SERVICE_ENABLED_FOR = "smServiceEnabledFor";
+const MMI_SM_KS_SERVICE_DISABLED = "smServiceDisabled";
+const MMI_SM_KS_SERVICE_REGISTERED = "smServiceRegistered";
+const MMI_SM_KS_SERVICE_ERASED = "smServiceErased";
+const MMI_SM_KS_SERVICE_INTERROGATED = "smServiceInterrogated";
+const MMI_SM_KS_SERVICE_NOT_PROVISIONED = "smServiceNotProvisioned";
+const MMI_SM_KS_CLIR_PERMANENT = "smClirPermanent";
+const MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_ON = "smClirDefaultOnNextCallOn";
+const MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_OFF = "smClirDefaultOnNextCallOff";
+const MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_ON = "smClirDefaultOffNextCallOn";
+const MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_OFF = "smClirDefaultOffNextCallOff";
+const MMI_SM_KS_CALL_CONTROL = "smCallControl";
+
+// MMI Service class
+const MMI_KS_SERVICE_CLASS_VOICE = "serviceClassVoice";
+const MMI_KS_SERVICE_CLASS_DATA = "serviceClassData";
+const MMI_KS_SERVICE_CLASS_FAX = "serviceClassFax";
+const MMI_KS_SERVICE_CLASS_SMS = "serviceClassSms";
+const MMI_KS_SERVICE_CLASS_DATA_SYNC = "serviceClassDataSync";
+const MMI_KS_SERVICE_CLASS_DATA_ASYNC = "serviceClassDataAsync";
+const MMI_KS_SERVICE_CLASS_PACKET = "serviceClassPacket";
+const MMI_KS_SERVICE_CLASS_PAD = "serviceClassPad";
+
+const MMI_PROC_TO_CF_ACTION = {};
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_ACTIVATION] = RIL.CALL_FORWARD_ACTION_ENABLE;
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_DEACTIVATION] = RIL.CALL_FORWARD_ACTION_DISABLE;
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_INTERROGATION] = RIL.CALL_FORWARD_ACTION_QUERY_STATUS;
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_REGISTRATION] = RIL.CALL_FORWARD_ACTION_REGISTRATION;
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_ERASURE] = RIL.CALL_FORWARD_ACTION_ERASURE;
+
+const MMI_SC_TO_CF_REASON = {};
+MMI_SC_TO_CF_REASON[MMI_SC_CFU] = RIL.CALL_FORWARD_REASON_UNCONDITIONAL;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_BUSY] = RIL.CALL_FORWARD_REASON_MOBILE_BUSY;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_NO_REPLY] = RIL.CALL_FORWARD_REASON_NO_REPLY;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_NOT_REACHABLE] = RIL.CALL_FORWARD_REASON_NOT_REACHABLE;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_ALL] = RIL.CALL_FORWARD_REASON_ALL_CALL_FORWARDING;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_ALL_CONDITIONAL] = RIL.CALL_FORWARD_REASON_ALL_CONDITIONAL_CALL_FORWARDING;
+
 const MMI_SC_TO_LOCK_TYPE = {};
-MMI_SC_TO_LOCK_TYPE[RIL.MMI_SC_PIN] = RIL.GECKO_CARDLOCK_PIN;
-MMI_SC_TO_LOCK_TYPE[RIL.MMI_SC_PIN2] = RIL.GECKO_CARDLOCK_PIN2;
-MMI_SC_TO_LOCK_TYPE[RIL.MMI_SC_PUK] = RIL.GECKO_CARDLOCK_PUK;
-MMI_SC_TO_LOCK_TYPE[RIL.MMI_SC_PUK2] = RIL.GECKO_CARDLOCK_PUK2;
+MMI_SC_TO_LOCK_TYPE[MMI_SC_PIN] = RIL.GECKO_CARDLOCK_PIN;
+MMI_SC_TO_LOCK_TYPE[MMI_SC_PIN2] = RIL.GECKO_CARDLOCK_PIN2;
+MMI_SC_TO_LOCK_TYPE[MMI_SC_PUK] = RIL.GECKO_CARDLOCK_PUK;
+MMI_SC_TO_LOCK_TYPE[MMI_SC_PUK2] = RIL.GECKO_CARDLOCK_PUK2;
 
 const MMI_SC_TO_STATUS_MESSAGE = {};
-MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PIN] = RIL.MMI_SM_KS_PIN_CHANGED;
-MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PIN2] = RIL.MMI_SM_KS_PIN2_CHANGED;
-MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PUK] = RIL.MMI_SM_KS_PIN_UNBLOCKED;
-MMI_SC_TO_STATUS_MESSAGE[RIL.MMI_SC_PUK2] = RIL.MMI_SM_KS_PIN2_UNBLOCKED;
+MMI_SC_TO_STATUS_MESSAGE[MMI_SC_PIN] = MMI_SM_KS_PIN_CHANGED;
+MMI_SC_TO_STATUS_MESSAGE[MMI_SC_PIN2] = MMI_SM_KS_PIN2_CHANGED;
+MMI_SC_TO_STATUS_MESSAGE[MMI_SC_PUK] = MMI_SM_KS_PIN_UNBLOCKED;
+MMI_SC_TO_STATUS_MESSAGE[MMI_SC_PUK2] = MMI_SM_KS_PIN2_UNBLOCKED;
 
 const MMI_PROC_TO_CLIR_ACTION = {};
-MMI_PROC_TO_CLIR_ACTION[RIL.MMI_PROCEDURE_ACTIVATION] = RIL.CLIR_INVOCATION;
-MMI_PROC_TO_CLIR_ACTION[RIL.MMI_PROCEDURE_DEACTIVATION] =  RIL.CLIR_SUPPRESSION;
+MMI_PROC_TO_CLIR_ACTION[MMI_PROCEDURE_ACTIVATION] = RIL.CLIR_INVOCATION;
+MMI_PROC_TO_CLIR_ACTION[MMI_PROCEDURE_DEACTIVATION] =  RIL.CLIR_SUPPRESSION;
 
 const MMI_SC_TO_CB_PROGRAM = {};
-MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAOC] = RIL.CALL_BARRING_PROGRAM_ALL_OUTGOING;
-MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAOIC] = RIL.CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL;
-MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAOICxH] = RIL.CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL_EXCEPT_HOME;
-MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAIC] = RIL.CALL_BARRING_PROGRAM_ALL_INCOMING;
-MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BAICr] = RIL.CALL_BARRING_PROGRAM_INCOMING_ROAMING;
-MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BA_ALL] = RIL.CALL_BARRING_PROGRAM_ALL_SERVICE;
-MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BA_MO] = RIL.CALL_BARRING_PROGRAM_OUTGOING_SERVICE;
-MMI_SC_TO_CB_PROGRAM[RIL.MMI_SC_BA_MT] = RIL.CALL_BARRING_PROGRAM_INCOMING_SERVICE;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAOC] = RIL.CALL_BARRING_PROGRAM_ALL_OUTGOING;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAOIC] = RIL.CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAOICxH] = RIL.CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL_EXCEPT_HOME;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAIC] = RIL.CALL_BARRING_PROGRAM_ALL_INCOMING;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAICr] = RIL.CALL_BARRING_PROGRAM_INCOMING_ROAMING;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BA_ALL] = RIL.CALL_BARRING_PROGRAM_ALL_SERVICE;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BA_MO] = RIL.CALL_BARRING_PROGRAM_OUTGOING_SERVICE;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BA_MT] = RIL.CALL_BARRING_PROGRAM_INCOMING_SERVICE;
+
+const MMI_KS_SERVICE_CLASS_MAPPING = {};
+MMI_KS_SERVICE_CLASS_MAPPING[RIL.ICC_SERVICE_CLASS_VOICE] = MMI_KS_SERVICE_CLASS_VOICE;
+MMI_KS_SERVICE_CLASS_MAPPING[RIL.ICC_SERVICE_CLASS_DATA] = MMI_KS_SERVICE_CLASS_DATA;
+MMI_KS_SERVICE_CLASS_MAPPING[RIL.ICC_SERVICE_CLASS_FAX] = MMI_KS_SERVICE_CLASS_FAX;
+MMI_KS_SERVICE_CLASS_MAPPING[RIL.ICC_SERVICE_CLASS_SMS] = MMI_KS_SERVICE_CLASS_SMS;
+MMI_KS_SERVICE_CLASS_MAPPING[RIL.ICC_SERVICE_CLASS_DATA_SYNC] = MMI_KS_SERVICE_CLASS_DATA_SYNC;
+MMI_KS_SERVICE_CLASS_MAPPING[RIL.ICC_SERVICE_CLASS_DATA_ASYNC] = MMI_KS_SERVICE_CLASS_DATA_ASYNC;
+MMI_KS_SERVICE_CLASS_MAPPING[RIL.ICC_SERVICE_CLASS_PACKET] = MMI_KS_SERVICE_CLASS_PACKET;
+MMI_KS_SERVICE_CLASS_MAPPING[RIL.ICC_SERVICE_CLASS_PAD] = MMI_KS_SERVICE_CLASS_PAD;
 
 let DEBUG;
 function debug(s) {
@@ -478,7 +608,7 @@ TelephonyService.prototype = {
    *        MMI full object.
    */
   _isTemporaryCLIR: function(aMmi) {
-    return (aMmi && aMmi.serviceCode === RIL.MMI_SC_CLIR) && aMmi.dialNumber;
+    return (aMmi && aMmi.serviceCode === MMI_SC_CLIR) && aMmi.dialNumber;
   },
 
   /**
@@ -491,9 +621,9 @@ TelephonyService.prototype = {
     // In temporary mode, MMI_PROCEDURE_ACTIVATION means allowing CLI
     // presentation, i.e. CLIR_SUPPRESSION. See TS 22.030, Annex B.
     switch (aProcedure) {
-      case RIL.MMI_PROCEDURE_ACTIVATION:
+      case MMI_PROCEDURE_ACTIVATION:
         return RIL.CLIR_SUPPRESSION;
-      case RIL.MMI_PROCEDURE_DEACTIVATION:
+      case MMI_PROCEDURE_DEACTIVATION:
         return RIL.CLIR_INVOCATION;
       default:
         return RIL.CLIR_DEFAULT;
@@ -660,27 +790,27 @@ TelephonyService.prototype = {
   // Handling of supplementary services within a call as 3GPP TS 22.030 6.5.5
   _dialInCallMMI: function(aClientId, aNumber, aCallback) {
     let mmiCallback = {
-      notifyError: () => aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_ERROR),
-      notifySuccess: () => aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_CALL_CONTROL)
+      notifyError: () => aCallback.notifyDialMMIError(MMI_ERROR_KS_ERROR),
+      notifySuccess: () => aCallback.notifyDialMMISuccess(MMI_SM_KS_CALL_CONTROL)
     };
 
     if (aNumber === "0") {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._hangUpBackground(aClientId, mmiCallback);
     } else if (aNumber === "1") {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._hangUpForeground(aClientId, mmiCallback);
     } else if (aNumber[0] === "1" && aNumber.length === 2) {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this.hangUpCall(aClientId, parseInt(aNumber[1]), mmiCallback);
     } else if (aNumber === "2") {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._switchActiveCall(aClientId, mmiCallback);
     } else if (aNumber[0] === "2" && aNumber.length === 2) {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._separateCallGsm(aClientId, parseInt(aNumber[1]), mmiCallback);
     } else if (aNumber === "3") {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._conferenceCallGsm(aClientId, mmiCallback);
     } else {
       this._dialCall(aClientId, aNumber, undefined, aCallback);
@@ -874,7 +1004,7 @@ TelephonyService.prototype = {
    */
   _dialMMI: function(aClientId, aMmi, aCallback) {
     let mmiServiceCode = aMmi ?
-      this._serviceCodeToKeyString(aMmi.serviceCode) : RIL.MMI_KS_SC_USSD;
+      this._serviceCodeToKeyString(aMmi.serviceCode) : MMI_KS_SC_USSD;
 
     aCallback.notifyDialMMI(mmiServiceCode);
 
@@ -882,51 +1012,51 @@ TelephonyService.prototype = {
     // trigger the appropriate RIL request if possible.
     switch (mmiServiceCode) {
       // Call Forwarding
-      case RIL.MMI_KS_SC_CALL_FORWARDING:
+      case MMI_KS_SC_CALL_FORWARDING:
         this._callForwardingMMI(aClientId, aMmi, aCallback);
         break;
 
       // Change the current ICC PIN number.
-      case RIL.MMI_KS_SC_PIN:
+      case MMI_KS_SC_PIN:
       // Change the current ICC PIN2 number.
-      case RIL.MMI_KS_SC_PIN2:
+      case MMI_KS_SC_PIN2:
         this._iccChangeLockMMI(aClientId, aMmi, aCallback);
         break;
 
       // Unblock ICC PUK.
-      case RIL.MMI_KS_SC_PUK:
+      case MMI_KS_SC_PUK:
       // Unblock ICC PUN2.
-      case RIL.MMI_KS_SC_PUK2:
+      case MMI_KS_SC_PUK2:
         this._iccUnlockMMI(aClientId, aMmi, aCallback);
         break;
 
       // IMEI
-      case RIL.MMI_KS_SC_IMEI:
+      case MMI_KS_SC_IMEI:
         this._getImeiMMI(aClientId, aMmi, aCallback);
         break;
 
       // CLIP
-      case RIL.MMI_KS_SC_CLIP:
+      case MMI_KS_SC_CLIP:
         this._clipMMI(aClientId, aMmi, aCallback);
         break;
 
       // CLIR (non-temporary ones)
-      case RIL.MMI_KS_SC_CLIR:
+      case MMI_KS_SC_CLIR:
         this._clirMMI(aClientId, aMmi, aCallback);
         break;
 
       // Change call barring password
-      case RIL.MMI_KS_SC_CHANGE_PASSWORD:
+      case MMI_KS_SC_CHANGE_PASSWORD:
         this._callBarringPasswordMMI(aClientId, aMmi, aCallback);
         break;
 
       // Call barring
-      case RIL.MMI_KS_SC_CALL_BARRING:
+      case MMI_KS_SC_CALL_BARRING:
         this._callBarringMMI(aClientId, aMmi, aCallback);
         break;
 
       // Call waiting
-      case RIL.MMI_KS_SC_CALL_WAITING:
+      case MMI_KS_SC_CALL_WAITING:
         this._callWaitingMMI(aClientId, aMmi, aCallback);
         break;
 
@@ -968,8 +1098,8 @@ TelephonyService.prototype = {
     }
 
     let options = {
-      action: RIL.MMI_PROC_TO_CF_ACTION[aMmi.procedure],
-      reason: RIL.MMI_SC_TO_CF_REASON[aMmi.serviceCode],
+      action: MMI_PROC_TO_CF_ACTION[aMmi.procedure],
+      reason: MMI_SC_TO_CF_REASON[aMmi.serviceCode],
       number: aMmi.sia,
       serviceClass: this._siToServiceClass(aMmi.sib),
     };
@@ -988,7 +1118,7 @@ TelephonyService.prototype = {
         let callForwardingOptions =
           this._rulesToCallForwardingOptions(aResponse.rules);
         aCallback.notifyDialMMISuccessWithCallForwardingOptions(
-          RIL.MMI_SM_KS_SERVICE_INTERROGATED,
+          MMI_SM_KS_SERVICE_INTERROGATED,
           callForwardingOptions.length,
           callForwardingOptions);
       });
@@ -1011,16 +1141,16 @@ TelephonyService.prototype = {
         let statusMessage;
         switch (options.action) {
           case RIL.CALL_FORWARD_ACTION_ENABLE:
-            statusMessage = RIL.MMI_SM_KS_SERVICE_ENABLED;
+            statusMessage = MMI_SM_KS_SERVICE_ENABLED;
             break;
           case RIL.CALL_FORWARD_ACTION_DISABLE:
-            statusMessage = RIL.MMI_SM_KS_SERVICE_DISABLED;
+            statusMessage = MMI_SM_KS_SERVICE_DISABLED;
             break;
           case RIL.CALL_FORWARD_ACTION_REGISTRATION:
-            statusMessage = RIL.MMI_SM_KS_SERVICE_REGISTERED;
+            statusMessage = MMI_SM_KS_SERVICE_REGISTERED;
             break;
           case RIL.CALL_FORWARD_ACTION_ERASURE:
-            statusMessage = RIL.MMI_SM_KS_SERVICE_ERASED;
+            statusMessage = MMI_SM_KS_SERVICE_ERASED;
             break;
         }
 
@@ -1063,15 +1193,15 @@ TelephonyService.prototype = {
         let errorMsg = aResponse.errorMsg;
 
         if (aResponse.retryCount <= 0) {
-          if (aMmi.serviceCode === RIL.MMI_SC_PIN) {
-            errorMsg = RIL.MMI_ERROR_KS_NEEDS_PUK;
+          if (aMmi.serviceCode === MMI_SC_PIN) {
+            errorMsg = MMI_ERROR_KS_NEEDS_PUK;
           }
 
           aCallback.notifyDialMMIError(errorMsg);
           return;
         }
 
-        aCallback.notifyDialMMIErrorWithInfo(RIL.MMI_ERROR_KS_BAD_PIN,
+        aCallback.notifyDialMMIErrorWithInfo(MMI_ERROR_KS_BAD_PIN,
                                              aResponse.retryCount);
         return;
       }
@@ -1114,15 +1244,15 @@ TelephonyService.prototype = {
         let errorMsg = aResponse.errorMsg;
 
         if (aResponse.retryCount <= 0) {
-          if (aMmi.serviceCode === RIL.MMI_SC_PUK) {
-            errorMsg = RIL.MMI_ERROR_KS_SIM_BLOCKED;
+          if (aMmi.serviceCode === MMI_SC_PUK) {
+            errorMsg = MMI_ERROR_KS_SIM_BLOCKED;
           }
 
           aCallback.notifyDialMMIError(errorMsg);
           return;
         }
 
-        aCallback.notifyDialMMIErrorWithInfo(RIL.MMI_ERROR_KS_BAD_PUK,
+        aCallback.notifyDialMMIErrorWithInfo(MMI_ERROR_KS_BAD_PUK,
                                              aResponse.retryCount);
         return;
       }
@@ -1171,8 +1301,8 @@ TelephonyService.prototype = {
    *        A nsITelephonyDialCallback object.
    */
   _clipMMI: function(aClientId, aMmi, aCallback) {
-    if (aMmi.procedure !== RIL.MMI_PROCEDURE_INTERROGATION) {
-      aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_NOT_SUPPORTED);
+    if (aMmi.procedure !== MMI_PROCEDURE_INTERROGATION) {
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
       return;
     }
 
@@ -1189,13 +1319,13 @@ TelephonyService.prototype = {
       // 2 for unknown
       switch (aResponse.provisioned) {
         case 0:
-          aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_SERVICE_DISABLED);
+          aCallback.notifyDialMMISuccess(MMI_SM_KS_SERVICE_DISABLED);
           break;
         case 1:
-          aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_SERVICE_ENABLED);
+          aCallback.notifyDialMMISuccess(MMI_SM_KS_SERVICE_ENABLED);
           break;
         default:
-          aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_ERROR);
+          aCallback.notifyDialMMIError(MMI_ERROR_KS_ERROR);
           break;
       }
     });
@@ -1213,7 +1343,7 @@ TelephonyService.prototype = {
    */
   _clirMMI: function(aClientId, aMmi, aCallback) {
     switch (aMmi.procedure) {
-      case RIL.MMI_PROCEDURE_INTERROGATION:
+      case MMI_PROCEDURE_INTERROGATION:
         this._sendToRilWorker(aClientId, "getCLIR", {}, aResponse => {
           if (aResponse.errorMsg) {
             aCallback.notifyDialMMIError(aResponse.errorMsg);
@@ -1226,15 +1356,15 @@ TelephonyService.prototype = {
           switch (aResponse.m) {
             // CLIR not provisioned.
             case 0:
-              statusMessage = RIL.MMI_SM_KS_SERVICE_NOT_PROVISIONED;
+              statusMessage = MMI_SM_KS_SERVICE_NOT_PROVISIONED;
               break;
             // CLIR provisioned in permanent mode.
             case 1:
-              statusMessage = RIL.MMI_SM_KS_CLIR_PERMANENT;
+              statusMessage = MMI_SM_KS_CLIR_PERMANENT;
               break;
             // Unknown (e.g. no network, etc.).
             case 2:
-              errorMsg = RIL.MMI_ERROR_KS_ERROR;
+              errorMsg = MMI_ERROR_KS_ERROR;
               break;
             // CLIR temporary mode presentation restricted.
             case 3:
@@ -1244,11 +1374,11 @@ TelephonyService.prototype = {
                 case 0:
                 // CLIR invocation.
                 case 1:
-                  statusMessage = RIL.MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_ON;
+                  statusMessage = MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_ON;
                   break;
                 // CLIR suppression.
                 case 2:
-                  statusMessage = RIL.MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_OFF;
+                  statusMessage = MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_OFF;
                   break;
                 default:
                   errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
@@ -1263,11 +1393,11 @@ TelephonyService.prototype = {
                 case 0:
                 // CLIR suppression.
                 case 2:
-                  statusMessage = RIL.MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_OFF;
+                  statusMessage = MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_OFF;
                   break;
                 // CLIR invocation.
                 case 1:
-                  statusMessage = RIL.MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_ON;
+                  statusMessage = MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_ON;
                   break;
                 default:
                   errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
@@ -1287,8 +1417,8 @@ TelephonyService.prototype = {
           aCallback.notifyDialMMISuccess(statusMessage);
         });
         break;
-      case RIL.MMI_PROCEDURE_ACTIVATION:
-      case RIL.MMI_PROCEDURE_DEACTIVATION:
+      case MMI_PROCEDURE_ACTIVATION:
+      case MMI_PROCEDURE_DEACTIVATION:
         let clirMode = MMI_PROC_TO_CLIR_ACTION[aMmi.procedure];
         this._sendToRilWorker(aClientId, "setCLIR", {clirMode: clirMode},
                               aResponse => {
@@ -1299,11 +1429,11 @@ TelephonyService.prototype = {
 
           let statusMessage;
           switch (aMmi.procedure) {
-            case RIL.MMI_PROCEDURE_ACTIVATION:
-              statusMessage = RIL.MMI_SM_KS_SERVICE_ENABLED;
+            case MMI_PROCEDURE_ACTIVATION:
+              statusMessage = MMI_SM_KS_SERVICE_ENABLED;
               break;
-            case RIL.MMI_PROCEDURE_DEACTIVATION:
-              statusMessage = RIL.MMI_SM_KS_SERVICE_DISABLED;
+            case MMI_PROCEDURE_DEACTIVATION:
+              statusMessage = MMI_SM_KS_SERVICE_DISABLED;
               break;
           }
 
@@ -1311,7 +1441,7 @@ TelephonyService.prototype = {
         });
         break;
       default:
-        aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_NOT_SUPPORTED);
+        aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
         break;
     }
   },
@@ -1332,26 +1462,26 @@ TelephonyService.prototype = {
       return;
     }
 
-    if (aMmi.procedure !== RIL.MMI_PROCEDURE_REGISTRATION &&
-        aMmi.procedure !== RIL.MMI_PROCEDURE_ACTIVATION) {
-      aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_INVALID_ACTION);
+    if (aMmi.procedure !== MMI_PROCEDURE_REGISTRATION &&
+        aMmi.procedure !== MMI_PROCEDURE_ACTIVATION) {
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_INVALID_ACTION);
       return;
     }
 
-    if (aMmi.sia !== "" && aMmi.sia !== RIL.MMI_ZZ_BARRING_SERVICE) {
-      aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_NOT_SUPPORTED);
+    if (aMmi.sia !== "" && aMmi.sia !== MMI_ZZ_BARRING_SERVICE) {
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
       return;
     }
 
     let validPassword = aSi => /^[0-9]{4}$/.test(aSi);
     if (!validPassword(aMmi.sib) || !validPassword(aMmi.sic) ||
         !validPassword(aMmi.pwd)) {
-      aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_INVALID_PASSWORD);
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_INVALID_PASSWORD);
       return;
     }
 
     if (aMmi.sic != aMmi.pwd) {
-      aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_MISMATCH_PASSWORD);
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_MISMATCH_PASSWORD);
       return;
     }
 
@@ -1367,7 +1497,7 @@ TelephonyService.prototype = {
         return;
       }
 
-      aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_PASSWORD_CHANGED);
+      aCallback.notifyDialMMISuccess(MMI_SM_KS_PASSWORD_CHANGED);
     });
   },
 
@@ -1389,7 +1519,7 @@ TelephonyService.prototype = {
     };
 
     switch (aMmi.procedure) {
-      case RIL.MMI_PROCEDURE_INTERROGATION:
+      case MMI_PROCEDURE_INTERROGATION:
         this._sendToRilWorker(aClientId, "queryCallBarringStatus", options,
                               aResponse => {
           if (aResponse.errorMsg) {
@@ -1398,25 +1528,25 @@ TelephonyService.prototype = {
           }
 
           if (!aResponse.enabled) {
-            aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_SERVICE_DISABLED);
+            aCallback.notifyDialMMISuccess(MMI_SM_KS_SERVICE_DISABLED);
             return;
           }
 
           let services = [];
           for (let mask = 1; mask <= RIL.ICC_SERVICE_CLASS_MAX; mask <<= 1) {
             if ((mask & aResponse.serviceClass) !== 0) {
-              services.push(RIL.MMI_KS_SERVICE_CLASS_MAPPING[mask]);
+              services.push(MMI_KS_SERVICE_CLASS_MAPPING[mask]);
             }
           }
 
-          aCallback.notifyDialMMISuccessWithStrings(RIL.MMI_SM_KS_SERVICE_ENABLED_FOR,
+          aCallback.notifyDialMMISuccessWithStrings(MMI_SM_KS_SERVICE_ENABLED_FOR,
                                                     services.length, services)
         });
         break;
-      case RIL.MMI_PROCEDURE_ACTIVATION:
-      case RIL.MMI_PROCEDURE_DEACTIVATION:
+      case MMI_PROCEDURE_ACTIVATION:
+      case MMI_PROCEDURE_DEACTIVATION:
         options.enabled =
-          (aMmi.procedure === RIL.MMI_PROCEDURE_ACTIVATION) ? 1 : 0;
+          (aMmi.procedure === MMI_PROCEDURE_ACTIVATION) ? 1 : 0;
         this._sendToRilWorker(aClientId, "setCallBarring", options,
                               aResponse => {
           if (aResponse.errorMsg) {
@@ -1425,13 +1555,13 @@ TelephonyService.prototype = {
           }
 
           aCallback.notifyDialMMISuccess(
-            options.enabled ? RIL.MMI_SM_KS_SERVICE_ENABLED
-                            : RIL.MMI_SM_KS_SERVICE_DISABLED
+            options.enabled ? MMI_SM_KS_SERVICE_ENABLED
+                            : MMI_SM_KS_SERVICE_DISABLED
           );
         });
         break;
       default:
-        aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_NOT_SUPPORTED);
+        aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
         break;
     }
   },
@@ -1453,7 +1583,7 @@ TelephonyService.prototype = {
     }
 
     switch (aMmi.procedure) {
-      case RIL.MMI_PROCEDURE_INTERROGATION:
+      case MMI_PROCEDURE_INTERROGATION:
         this._sendToRilWorker(aClientId, "queryCallWaiting", {}, aResponse => {
           if (aResponse.errorMsg) {
             aCallback.notifyDialMMIError(aResponse.errorMsg);
@@ -1461,25 +1591,25 @@ TelephonyService.prototype = {
           }
 
           if (!aResponse.enabled) {
-            aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_SERVICE_DISABLED);
+            aCallback.notifyDialMMISuccess(MMI_SM_KS_SERVICE_DISABLED);
             return;
           }
 
           let services = [];
           for (let mask = 1; mask <= RIL.ICC_SERVICE_CLASS_MAX; mask <<= 1) {
             if ((mask & aResponse.serviceClass) !== 0) {
-              services.push(RIL.MMI_KS_SERVICE_CLASS_MAPPING[mask]);
+              services.push(MMI_KS_SERVICE_CLASS_MAPPING[mask]);
             }
           }
 
-          aCallback.notifyDialMMISuccessWithStrings(RIL.MMI_SM_KS_SERVICE_ENABLED_FOR,
+          aCallback.notifyDialMMISuccessWithStrings(MMI_SM_KS_SERVICE_ENABLED_FOR,
                                                     services.length, services);
         });
         break;
-      case RIL.MMI_PROCEDURE_ACTIVATION:
-      case RIL.MMI_PROCEDURE_DEACTIVATION:
+      case MMI_PROCEDURE_ACTIVATION:
+      case MMI_PROCEDURE_DEACTIVATION:
         let options = {
-          enabled: (aMmi.procedure === RIL.MMI_PROCEDURE_ACTIVATION) ? 1 : 0,
+          enabled: (aMmi.procedure === MMI_PROCEDURE_ACTIVATION) ? 1 : 0,
           serviceClass: this._siToServiceClass(aMmi.sia),
         };
 
@@ -1491,55 +1621,55 @@ TelephonyService.prototype = {
           }
 
           aCallback.notifyDialMMISuccess(
-            options.enabled ? RIL.MMI_SM_KS_SERVICE_ENABLED
-                            : RIL.MMI_SM_KS_SERVICE_DISABLED
+            options.enabled ? MMI_SM_KS_SERVICE_ENABLED
+                            : MMI_SM_KS_SERVICE_DISABLED
           );
         });
         break;
       default:
-        aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_NOT_SUPPORTED);
+        aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
         break;
     }
   },
 
   _serviceCodeToKeyString: function(aServiceCode) {
     switch (aServiceCode) {
-      case RIL.MMI_SC_CFU:
-      case RIL.MMI_SC_CF_BUSY:
-      case RIL.MMI_SC_CF_NO_REPLY:
-      case RIL.MMI_SC_CF_NOT_REACHABLE:
-      case RIL.MMI_SC_CF_ALL:
-      case RIL.MMI_SC_CF_ALL_CONDITIONAL:
-        return RIL.MMI_KS_SC_CALL_FORWARDING;
-      case RIL.MMI_SC_PIN:
-        return RIL.MMI_KS_SC_PIN;
-      case RIL.MMI_SC_PIN2:
-        return RIL.MMI_KS_SC_PIN2;
-      case RIL.MMI_SC_PUK:
-        return RIL.MMI_KS_SC_PUK;
-      case RIL.MMI_SC_PUK2:
-        return RIL.MMI_KS_SC_PUK2;
-      case RIL.MMI_SC_IMEI:
-        return RIL.MMI_KS_SC_IMEI;
-      case RIL.MMI_SC_CLIP:
-        return RIL.MMI_KS_SC_CLIP;
-      case RIL.MMI_SC_CLIR:
-        return RIL.MMI_KS_SC_CLIR;
-      case RIL.MMI_SC_BAOC:
-      case RIL.MMI_SC_BAOIC:
-      case RIL.MMI_SC_BAOICxH:
-      case RIL.MMI_SC_BAIC:
-      case RIL.MMI_SC_BAICr:
-      case RIL.MMI_SC_BA_ALL:
-      case RIL.MMI_SC_BA_MO:
-      case RIL.MMI_SC_BA_MT:
-        return RIL.MMI_KS_SC_CALL_BARRING;
-      case RIL.MMI_SC_CALL_WAITING:
-        return RIL.MMI_KS_SC_CALL_WAITING;
-      case RIL.MMI_SC_CHANGE_PASSWORD:
-        return RIL.MMI_KS_SC_CHANGE_PASSWORD;
+      case MMI_SC_CFU:
+      case MMI_SC_CF_BUSY:
+      case MMI_SC_CF_NO_REPLY:
+      case MMI_SC_CF_NOT_REACHABLE:
+      case MMI_SC_CF_ALL:
+      case MMI_SC_CF_ALL_CONDITIONAL:
+        return MMI_KS_SC_CALL_FORWARDING;
+      case MMI_SC_PIN:
+        return MMI_KS_SC_PIN;
+      case MMI_SC_PIN2:
+        return MMI_KS_SC_PIN2;
+      case MMI_SC_PUK:
+        return MMI_KS_SC_PUK;
+      case MMI_SC_PUK2:
+        return MMI_KS_SC_PUK2;
+      case MMI_SC_IMEI:
+        return MMI_KS_SC_IMEI;
+      case MMI_SC_CLIP:
+        return MMI_KS_SC_CLIP;
+      case MMI_SC_CLIR:
+        return MMI_KS_SC_CLIR;
+      case MMI_SC_BAOC:
+      case MMI_SC_BAOIC:
+      case MMI_SC_BAOICxH:
+      case MMI_SC_BAIC:
+      case MMI_SC_BAICr:
+      case MMI_SC_BA_ALL:
+      case MMI_SC_BA_MO:
+      case MMI_SC_BA_MT:
+        return MMI_KS_SC_CALL_BARRING;
+      case MMI_SC_CALL_WAITING:
+        return MMI_KS_SC_CALL_WAITING;
+      case MMI_SC_CHANGE_PASSWORD:
+        return MMI_KS_SC_CHANGE_PASSWORD;
       default:
-        return RIL.MMI_KS_SC_USSD;
+        return MMI_KS_SC_USSD;
     }
   },
 
@@ -1586,22 +1716,22 @@ TelephonyService.prototype = {
     // an MMI code of the form **04*OLD_PIN*NEW_PIN*NEW_PIN#, where old PIN
     // should be entered as the SIA parameter and the new PIN as SIB and
     // SIC.
-    if (aMmi.procedure !== RIL.MMI_PROCEDURE_REGISTRATION) {
-      return RIL.MMI_ERROR_KS_INVALID_ACTION;
+    if (aMmi.procedure !== MMI_PROCEDURE_REGISTRATION) {
+      return MMI_ERROR_KS_INVALID_ACTION;
     }
 
     if (!aMmi.sia || !aMmi.sib || !aMmi.sic) {
-      return RIL.MMI_ERROR_KS_ERROR;
+      return MMI_ERROR_KS_ERROR;
     }
 
     if (aMmi.sia.length < 4 || aMmi.sia.length > 8 ||
         aMmi.sib.length < 4 || aMmi.sib.length > 8 ||
         aMmi.sic.length < 4 || aMmi.sic.length > 8) {
-      return RIL.MMI_ERROR_KS_INVALID_PIN;
+      return MMI_ERROR_KS_INVALID_PIN;
     }
 
     if (aMmi.sib != aMmi.sic) {
-      return RIL.MMI_ERROR_KS_MISMATCH_PIN;
+      return MMI_ERROR_KS_MISMATCH_PIN;
     }
 
     return null;
