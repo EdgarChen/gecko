@@ -60,7 +60,11 @@ class B2GXPCShellRemote(XPCShellRemote):
         if self.device._useZip:
             return XPCShellRemote.setupTestDir(self)
 
-        for root, dirs, files in os.walk(self.xpcDir):
+        test_path = self.xpcDir
+        if self.options.testPath:
+            test_path = os.path.join(self.xpcDir, self.options.testPath)
+
+        for root, dirs, files in os.walk(test_path):
             for filename in files:
                 rel_path = os.path.relpath(os.path.join(root, filename), self.xpcDir)
                 test_file = os.path.join(self.remoteScriptsDir, rel_path)
