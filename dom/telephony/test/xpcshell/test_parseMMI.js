@@ -1,7 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-subscriptLoader.loadSubScript("resource://gre/modules/ril_consts.js", this);
+let TS = {};
+subscriptLoader.loadSubScript("resource://gre/components/TelephonyService.js", TS);
 
 let NS = {};
 subscriptLoader.loadSubScript("resource://gre/modules/DialNumberUtils.jsm", NS);
