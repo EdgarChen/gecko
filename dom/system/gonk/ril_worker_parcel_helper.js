@@ -159,6 +159,33 @@
   /**
    * Documentation ....
    *
+   * Enter Icc Pin2.
+   *
+   * options:
+   *   An object contains following attribute:
+   *   - password: String containing the PIN2.
+   *
+   * response:
+   *   An object contains following attribute:
+   *   - retryCount
+   */
+  ParcelHelperObject.prototype.enterIccPin2 = function(aOptions, aCallback) {
+    let Buf = this.context.Buf;
+    Buf.newParcel(REQUEST_ENTER_SIM_PIN2, aOptions, (aLength, aOptions) => {
+      aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+      aCallback(aOptions);
+    });
+
+    // Remove v5Legacy.
+    Buf.writeInt32(2);
+    Buf.writeString(aOptions.password);
+    Buf.writeString(aOptions.aid || this.context.RIL.aid);
+    Buf.sendParcel();
+  };
+
+  /**
+   * Documentation ....
+   *
    * Set the preferred network type.
    *
    * options:
