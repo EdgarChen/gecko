@@ -215,6 +215,33 @@
   /**
    * Documentation ....
    *
+   * Enter Depersonalization.
+   *
+   * options:
+   *   An object contains following attribute:
+   *   - personlization: One of CARD_PERSOSUBSTATE_*.
+   *   - password: String containing the password.
+   *
+   * response:
+   *   An object contains following attribute:
+   *   - retryCount
+   */
+  ParcelHelperObject.prototype.enterDepersonalization = function(aOptions, aCallback) {
+    let Buf = this.context.Buf;
+    Buf.newParcel(REQUEST_ENTER_NETWORK_DEPERSONALIZATION_CODE, aOptions, (aLength, aOptions) => {
+      aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+      aCallback(aOptions);
+    });
+
+    // Remove v5Legacy.
+    Buf.writeInt32(1);
+    Buf.writeString(aOptions.password);
+    Buf.sendParcel();
+  };
+
+  /**
+   * Documentation ....
+   *
    * Set the preferred network type.
    *
    * options:

@@ -373,28 +373,14 @@ RilObject.prototype = {
       case GECKO_CARDLOCK_PCK_PUK:
       case GECKO_CARDLOCK_RCCK_PUK: // Fall through.
       case GECKO_CARDLOCK_RSPCK_PUK:
-        this.enterDepersonalization(options);
+        this.context.ParcelHelper.send("enterDepersonalization", options, (response) => {
+          this.sendChromeMessage(response);
+        });
         break;
       default:
         options.errorMsg = GECKO_ERROR_REQUEST_NOT_SUPPORTED;
         this.sendChromeMessage(options);
     }
-  },
-
-  /**
-   * Requests a network personalization be deactivated.
-   *
-   * @param personlization
-   *        One of CARD_PERSOSUBSTATE_*
-   * @param password
-   *        String containing the password.
-   */
-  enterDepersonalization: function(options) {
-    let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_ENTER_NETWORK_DEPERSONALIZATION_CODE, options);
-    Buf.writeInt32(1);
-    Buf.writeString(options.password);
-    Buf.sendParcel();
   },
 
   /**
@@ -3896,10 +3882,6 @@ RilObject.prototype[REQUEST_CHANGE_SIM_PIN] = function REQUEST_CHANGE_SIM_PIN(le
   this._processEnterAndChangeICCResponses(length, options);
 };
 RilObject.prototype[REQUEST_CHANGE_SIM_PIN2] = function REQUEST_CHANGE_SIM_PIN2(length, options) {
-  this._processEnterAndChangeICCResponses(length, options);
-};
-RilObject.prototype[REQUEST_ENTER_NETWORK_DEPERSONALIZATION_CODE] =
-  function REQUEST_ENTER_NETWORK_DEPERSONALIZATION_CODE(length, options) {
   this._processEnterAndChangeICCResponses(length, options);
 };
 RilObject.prototype[REQUEST_GET_CURRENT_CALLS] = function REQUEST_GET_CURRENT_CALLS(length, options) {
