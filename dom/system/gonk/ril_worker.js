@@ -334,7 +334,9 @@ RilObject.prototype = {
   iccUnlockCardLock: function(options) {
     switch (options.lockType) {
       case GECKO_CARDLOCK_PIN:
-        this.enterICCPIN(options);
+        this.context.ParcelHelper.send("enterIccPin", options, (response) => {
+          this.sendChromeMessage(response);
+        });
         break;
       case GECKO_CARDLOCK_PIN2:
         this.enterICCPIN2(options);
@@ -371,25 +373,6 @@ RilObject.prototype = {
         options.errorMsg = GECKO_ERROR_REQUEST_NOT_SUPPORTED;
         this.sendChromeMessage(options);
     }
-  },
-
-  /**
-   * Enter a PIN to unlock the ICC.
-   *
-   * @param password
-   *        String containing the PIN.
-   * @param [optional] aid
-   *        AID value.
-   */
-  enterICCPIN: function(options) {
-    let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_ENTER_SIM_PIN, options);
-    Buf.writeInt32(this.v5Legacy ? 1 : 2);
-    Buf.writeString(options.password);
-    if (!this.v5Legacy) {
-      Buf.writeString(options.aid || this.aid);
-    }
-    Buf.sendParcel();
   },
 
   /**
@@ -3966,9 +3949,6 @@ RilObject.prototype = {
   }
 };
 
-RilObject.prototype[REQUEST_ENTER_SIM_PIN] = function REQUEST_ENTER_SIM_PIN(length, options) {
-  this._processEnterAndChangeICCResponses(length, options);
-};
 RilObject.prototype[REQUEST_ENTER_SIM_PUK] = function REQUEST_ENTER_SIM_PUK(length, options) {
   this._processEnterAndChangeICCResponses(length, options);
 };
