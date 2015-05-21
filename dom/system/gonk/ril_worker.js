@@ -329,61 +329,6 @@ RilObject.prototype = {
   },
 
   /**
-   * Helper function for unlocking ICC locks.
-   */
-  iccUnlockCardLock: function(options) {
-    switch (options.lockType) {
-      case GECKO_CARDLOCK_PIN:
-        this.context.ParcelHelper.send("enterIccPin", options, (response) => {
-          this.sendChromeMessage(response);
-        });
-        break;
-      case GECKO_CARDLOCK_PIN2:
-        this.context.ParcelHelper.send("enterIccPin2", options, (response) => {
-          this.sendChromeMessage(response);
-        });
-        break;
-      case GECKO_CARDLOCK_PUK:
-        this.context.ParcelHelper.send("enterIccPuk", options, (response) => {
-          this.sendChromeMessage(response);
-        });
-        break;
-      case GECKO_CARDLOCK_PUK2:
-        this.context.ParcelHelper.send("enterIccPuk2", options, (response) => {
-          this.sendChromeMessage(response);
-        });
-        break;
-      case GECKO_CARDLOCK_NCK:
-      case GECKO_CARDLOCK_NSCK:
-      case GECKO_CARDLOCK_NCK1:
-      case GECKO_CARDLOCK_NCK2:
-      case GECKO_CARDLOCK_HNCK:
-      case GECKO_CARDLOCK_CCK:
-      case GECKO_CARDLOCK_SPCK:
-      case GECKO_CARDLOCK_PCK:
-      case GECKO_CARDLOCK_RCCK:
-      case GECKO_CARDLOCK_RSPCK:
-      case GECKO_CARDLOCK_NCK_PUK:
-      case GECKO_CARDLOCK_NSCK_PUK:
-      case GECKO_CARDLOCK_NCK1_PUK:
-      case GECKO_CARDLOCK_NCK2_PUK:
-      case GECKO_CARDLOCK_HNCK_PUK:
-      case GECKO_CARDLOCK_CCK_PUK:
-      case GECKO_CARDLOCK_SPCK_PUK:
-      case GECKO_CARDLOCK_PCK_PUK:
-      case GECKO_CARDLOCK_RCCK_PUK: // Fall through.
-      case GECKO_CARDLOCK_RSPCK_PUK:
-        this.context.ParcelHelper.send("enterDepersonalization", options, (response) => {
-          this.sendChromeMessage(response);
-        });
-        break;
-      default:
-        options.errorMsg = GECKO_ERROR_REQUEST_NOT_SUPPORTED;
-        this.sendChromeMessage(options);
-    }
-  },
-
-  /**
    * Change the current ICC PIN number.
    *
    * @param password

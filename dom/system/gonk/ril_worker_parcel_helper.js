@@ -103,140 +103,128 @@
   /**
    * Documentation ....
    *
-   * Enter Icc Pin.
+   * Unlock Icc Lock.
    *
    * options:
    *   An object contains following attribute:
-   *   - password: String containing the PIN.
-   *
-   * response:
-   *   An object contains following attribute:
-   *   - retryCount
-   */
-  ParcelHelperObject.prototype.enterIccPin = function(aOptions, aCallback) {
-    let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_ENTER_SIM_PIN, aOptions, (aLength, aOptions) => {
-      aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
-      aCallback(aOptions);
-    });
-
-    // Remove v5Legacy.
-    Buf.writeInt32(2);
-    Buf.writeString(aOptions.password);
-    Buf.writeString(aOptions.aid || this.context.RIL.aid);
-    Buf.sendParcel();
-  };
-
-  /**
-   * Documentation ....
-   *
-   * Enter Icc Puk.
-   *
-   * options:
-   *   An object contains following attribute:
-   *   - password: String containing the PUK value.
-   *   - newPin: String containing the new PIN value.
-   *
-   * response:
-   *   An object contains following attribute:
-   *   - retryCount
-   */
-  ParcelHelperObject.prototype.enterIccPuk = function(aOptions, aCallback) {
-    let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_ENTER_SIM_PUK, aOptions, (aLength, aOptions) => {
-      aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
-      aCallback(aOptions);
-    });
-
-    // Remove v5Legacy.
-    Buf.writeInt32(3);
-    Buf.writeString(aOptions.password);
-    Buf.writeString(aOptions.newPin);
-    Buf.writeString(aOptions.aid || this.context.RIL.aid);
-    Buf.sendParcel();
-  };
-
-  /**
-   * Documentation ....
-   *
-   * Enter Icc Pin2.
-   *
-   * options:
-   *   An object contains following attribute:
-   *   - password: String containing the PIN2.
-   *
-   * response:
-   *   An object contains following attribute:
-   *   - retryCount
-   */
-  ParcelHelperObject.prototype.enterIccPin2 = function(aOptions, aCallback) {
-    let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_ENTER_SIM_PIN2, aOptions, (aLength, aOptions) => {
-      aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
-      aCallback(aOptions);
-    });
-
-    // Remove v5Legacy.
-    Buf.writeInt32(2);
-    Buf.writeString(aOptions.password);
-    Buf.writeString(aOptions.aid || this.context.RIL.aid);
-    Buf.sendParcel();
-  };
-
-  /**
-   * Documentation ....
-   *
-   * Enter Icc Puk2.
-   *
-   * options:
-   *   An object contains following attribute:
-   *   - password: String containing the PUK2 value.
-   *   - newPin: String containing the new PIN2 value.
-   *
-   * response:
-   *   An object contains following attribute:
-   *   - retryCount
-   */
-  ParcelHelperObject.prototype.enterIccPuk2 = function(aOptions, aCallback) {
-    let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_ENTER_SIM_PUK2, aOptions, (aLength, aOptions) => {
-      aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
-      aCallback(aOptions);
-    });
-
-    // Remove v5Legacy.
-    Buf.writeInt32(3);
-    Buf.writeString(aOptions.password);
-    Buf.writeString(aOptions.newPin);
-    Buf.writeString(aOptions.aid || this.context.RIL.aid);
-    Buf.sendParcel();
-  };
-
-  /**
-   * Documentation ....
-   *
-   * Enter Depersonalization.
-   *
-   * options:
-   *   An object contains following attribute:
-   *   - personlization: One of CARD_PERSOSUBSTATE_*.
+   *   - lockType: One of GECKO_CARDLOCK_*.
    *   - password: String containing the password.
+   *   - newPin: String containing the new password value.
    *
    * response:
    *   An object contains following attribute:
    *   - retryCount
    */
-  ParcelHelperObject.prototype.enterDepersonalization = function(aOptions, aCallback) {
+  ParcelHelperObject.prototype.iccUnlockCardLock = function(aOptions, aCallback) {
     let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_ENTER_NETWORK_DEPERSONALIZATION_CODE, aOptions, (aLength, aOptions) => {
-      aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
-      aCallback(aOptions);
-    });
+    let RIL = this.context.RIL;
+    // Enter Icc Pin.
+    let enterIccPin = function(aOptions, aCallback) {
+      Buf.newParcel(REQUEST_ENTER_SIM_PIN, aOptions, (aLength, aOptions) => {
+        aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+        aCallback(aOptions);
+      });
 
-    // Remove v5Legacy.
-    Buf.writeInt32(1);
-    Buf.writeString(aOptions.password);
-    Buf.sendParcel();
+      // Remove v5Legacy.
+      Buf.writeInt32(2);
+      Buf.writeString(aOptions.password);
+      Buf.writeString(aOptions.aid || RIL.aid);
+      Buf.sendParcel();
+    };
+    // Enter Icc Puk.
+    let enterIccPuk = function(aOptions, aCallback) {
+      Buf.newParcel(REQUEST_ENTER_SIM_PUK, aOptions, (aLength, aOptions) => {
+        aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+        aCallback(aOptions);
+      });
+
+      // Remove v5Legacy.
+      Buf.writeInt32(3);
+      Buf.writeString(aOptions.password);
+      Buf.writeString(aOptions.newPin);
+      Buf.writeString(aOptions.aid || RIL.aid);
+      Buf.sendParcel();
+    };
+    // Enter Icc Pin2.
+    let enterIccPin2 = function(aOptions, aCallback) {
+      Buf.newParcel(REQUEST_ENTER_SIM_PIN2, aOptions, (aLength, aOptions) => {
+        aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+        aCallback(aOptions);
+      });
+
+      // Remove v5Legacy.
+      Buf.writeInt32(2);
+      Buf.writeString(aOptions.password);
+      Buf.writeString(aOptions.aid || RIL.aid);
+      Buf.sendParcel();
+    };
+    // Enter Icc Puk2.
+    let enterIccPuk2 = function(aOptions, aCallback) {
+      Buf.newParcel(REQUEST_ENTER_SIM_PUK2, aOptions, (aLength, aOptions) => {
+        aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+        aCallback(aOptions);
+      });
+
+      // Remove v5Legacy.
+      Buf.writeInt32(3);
+      Buf.writeString(aOptions.password);
+      Buf.writeString(aOptions.newPin);
+      Buf.writeString(aOptions.aid || RIL.aid);
+      Buf.sendParcel();
+    };
+    // Enter Depersonalization.
+    let enterDepersonalization = function(aOptions, aCallback) {
+      Buf.newParcel(REQUEST_ENTER_NETWORK_DEPERSONALIZATION_CODE, aOptions, (aLength, aOptions) => {
+        aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+        aCallback(aOptions);
+      });
+
+      // Remove v5Legacy.
+      Buf.writeInt32(1);
+      Buf.writeString(aOptions.password);
+      Buf.sendParcel();
+    };
+
+    switch (aOptions.lockType) {
+      case GECKO_CARDLOCK_PIN:
+        enterIccPin(aOptions, aCallback);
+        break;
+      case GECKO_CARDLOCK_PIN2:
+        enterIccPin2(aOptions, aCallback);
+        break;
+      case GECKO_CARDLOCK_PUK:
+        enterIccPuk(aOptions, aCallback);
+        break;
+      case GECKO_CARDLOCK_PUK2:
+        enterIccPuk2(aOptions, aCallback);
+        break;
+      case GECKO_CARDLOCK_NCK:
+      case GECKO_CARDLOCK_NSCK:
+      case GECKO_CARDLOCK_NCK1:
+      case GECKO_CARDLOCK_NCK2:
+      case GECKO_CARDLOCK_HNCK:
+      case GECKO_CARDLOCK_CCK:
+      case GECKO_CARDLOCK_SPCK:
+      case GECKO_CARDLOCK_PCK:
+      case GECKO_CARDLOCK_RCCK:
+      case GECKO_CARDLOCK_RSPCK:
+      case GECKO_CARDLOCK_NCK_PUK:
+      case GECKO_CARDLOCK_NSCK_PUK:
+      case GECKO_CARDLOCK_NCK1_PUK:
+      case GECKO_CARDLOCK_NCK2_PUK:
+      case GECKO_CARDLOCK_HNCK_PUK:
+      case GECKO_CARDLOCK_CCK_PUK:
+      case GECKO_CARDLOCK_SPCK_PUK:
+      case GECKO_CARDLOCK_PCK_PUK:
+      case GECKO_CARDLOCK_RCCK_PUK: // Fall through.
+      case GECKO_CARDLOCK_RSPCK_PUK:
+        enterDepersonalization(aOptions, aCallback);
+        break;
+      default:
+        aOptions.errorMsg = GECKO_ERROR_REQUEST_NOT_SUPPORTED;
+        aCallback(aOptions);
+        break;
+    }
   };
 
   /**
