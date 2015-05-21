@@ -342,7 +342,9 @@ RilObject.prototype = {
         this.enterICCPIN2(options);
         break;
       case GECKO_CARDLOCK_PUK:
-        this.enterICCPUK(options);
+        this.context.ParcelHelper.send("enterIccPuk", options, (response) => {
+          this.sendChromeMessage(response);
+        });
         break;
       case GECKO_CARDLOCK_PUK2:
         this.enterICCPUK2(options);
@@ -453,28 +455,6 @@ RilObject.prototype = {
     }
     Buf.sendParcel();
   },
-
-  /**
-   * Supplies ICC PUK and a new PIN to unlock the ICC.
-   *
-   * @param password
-   *        String containing the PUK value.
-   * @param newPassword
-   *        String containing the new PIN value.
-   * @param [optional] aid
-   *        AID value.
-   */
-   enterICCPUK: function(options) {
-     let Buf = this.context.Buf;
-     Buf.newParcel(REQUEST_ENTER_SIM_PUK, options);
-     Buf.writeInt32(this.v5Legacy ? 2 : 3);
-     Buf.writeString(options.password);
-     Buf.writeString(options.newPin);
-     if (!this.v5Legacy) {
-       Buf.writeString(options.aid || this.aid);
-     }
-     Buf.sendParcel();
-   },
 
   /**
    * Supplies ICC PUK2 and a new PIN2 to unlock the ICC.
@@ -3949,9 +3929,6 @@ RilObject.prototype = {
   }
 };
 
-RilObject.prototype[REQUEST_ENTER_SIM_PUK] = function REQUEST_ENTER_SIM_PUK(length, options) {
-  this._processEnterAndChangeICCResponses(length, options);
-};
 RilObject.prototype[REQUEST_ENTER_SIM_PIN2] = function REQUEST_ENTER_SIM_PIN2(length, options) {
   this._processEnterAndChangeICCResponses(length, options);
 };
