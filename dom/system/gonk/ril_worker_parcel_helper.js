@@ -230,6 +230,67 @@
   /**
    * Documentation ....
    *
+   * Change Icc Lock Password.
+   *
+   * options:
+   *   An object contains following attribute:
+   *   - lockType: One of GECKO_CARDLOCK_*.
+   *   - password: String containing the password.
+   *   - newPassword: String containing the new password value.
+   *
+   * response:
+   *   An object contains following attribute:
+   *   - retryCount
+   */
+  ParcelHelperObject.prototype.iccChangeCardLockPassword = function(aOptions, aCallback) {
+    let Buf = this.context.Buf;
+    let RIL = this.context.RIL;
+    // Change ICC PIN.
+    let changeIccPin = function(aOptions, aCallback) {
+      Buf.newParcel(REQUEST_CHANGE_SIM_PIN, aOptions, (aLength, aOptions) => {
+        aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+        aCallback(aOptions);
+      });
+
+      // Remove v5Legacy.
+      Buf.writeInt32(3);
+      Buf.writeString(aOptions.password);
+      Buf.writeString(aOptions.newPassword);
+      Buf.writeString(aOptions.aid || RIL.aid);
+      Buf.sendParcel();
+    };
+    // Change ICC PIN2.
+    let changeIccPin2 = function(aOptions, aCallback) {
+      Buf.newParcel(REQUEST_CHANGE_SIM_PIN2, aOptions, (aLength, aOptions) => {
+        aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+        aCallback(aOptions);
+      });
+
+      // Remove v5Legacy.
+      Buf.writeInt32(3);
+      Buf.writeString(aOptions.password);
+      Buf.writeString(aOptions.newPassword);
+      Buf.writeString(aOptions.aid || RIL.aid);
+      Buf.sendParcel();
+    };
+
+    switch (aOptions.lockType) {
+      case GECKO_CARDLOCK_PIN:
+        changeIccPin(aOptions, aCallback);
+        break;
+      case GECKO_CARDLOCK_PIN2:
+        changeIccPin2(aOptions, aCallback);
+        break;
+      default:
+        aOptions.errorMsg = GECKO_ERROR_REQUEST_NOT_SUPPORTED;
+        aCallback(aOptions);
+        break;
+    }
+  };
+
+  /**
+   * Documentation ....
+   *
    * Set the preferred network type.
    *
    * options:

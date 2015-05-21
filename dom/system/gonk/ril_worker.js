@@ -329,67 +329,6 @@ RilObject.prototype = {
   },
 
   /**
-   * Change the current ICC PIN number.
-   *
-   * @param password
-   *        String containing the old PIN value
-   * @param newPassword
-   *        String containing the new PIN value
-   * @param [optional] aid
-   *        AID value.
-   */
-  changeICCPIN: function(options) {
-    let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_CHANGE_SIM_PIN, options);
-    Buf.writeInt32(this.v5Legacy ? 2 : 3);
-    Buf.writeString(options.password);
-    Buf.writeString(options.newPassword);
-    if (!this.v5Legacy) {
-      Buf.writeString(options.aid || this.aid);
-    }
-    Buf.sendParcel();
-  },
-
-  /**
-   * Change the current ICC PIN2 number.
-   *
-   * @param password
-   *        String containing the old PIN2 value
-   * @param newPassword
-   *        String containing the new PIN2 value
-   * @param [optional] aid
-   *        AID value.
-   */
-  changeICCPIN2: function(options) {
-    let Buf = this.context.Buf;
-    Buf.newParcel(REQUEST_CHANGE_SIM_PIN2, options);
-    Buf.writeInt32(this.v5Legacy ? 2 : 3);
-    Buf.writeString(options.password);
-    Buf.writeString(options.newPassword);
-    if (!this.v5Legacy) {
-      Buf.writeString(options.aid || this.aid);
-    }
-    Buf.sendParcel();
-  },
-
-  /**
-   * Helper function for changing ICC locks.
-   */
-  iccChangeCardLockPassword: function(options) {
-    switch (options.lockType) {
-      case GECKO_CARDLOCK_PIN:
-        this.changeICCPIN(options);
-        break;
-      case GECKO_CARDLOCK_PIN2:
-        this.changeICCPIN2(options);
-        break;
-      default:
-        options.errorMsg = GECKO_ERROR_REQUEST_NOT_SUPPORTED;
-        this.sendChromeMessage(options);
-    }
-  },
-
-  /**
    * Helper function for setting the state of ICC locks.
    */
   iccSetCardLockEnabled: function(options) {
@@ -3823,12 +3762,6 @@ RilObject.prototype = {
   }
 };
 
-RilObject.prototype[REQUEST_CHANGE_SIM_PIN] = function REQUEST_CHANGE_SIM_PIN(length, options) {
-  this._processEnterAndChangeICCResponses(length, options);
-};
-RilObject.prototype[REQUEST_CHANGE_SIM_PIN2] = function REQUEST_CHANGE_SIM_PIN2(length, options) {
-  this._processEnterAndChangeICCResponses(length, options);
-};
 RilObject.prototype[REQUEST_GET_CURRENT_CALLS] = function REQUEST_GET_CURRENT_CALLS(length, options) {
   // Retry getCurrentCalls several times when error occurs.
   if (options.errorMsg) {
