@@ -186,6 +186,35 @@
   /**
    * Documentation ....
    *
+   * Enter Icc Puk2.
+   *
+   * options:
+   *   An object contains following attribute:
+   *   - password: String containing the PUK2 value.
+   *   - newPin: String containing the new PIN2 value.
+   *
+   * response:
+   *   An object contains following attribute:
+   *   - retryCount
+   */
+  ParcelHelperObject.prototype.enterIccPuk2 = function(aOptions, aCallback) {
+    let Buf = this.context.Buf;
+    Buf.newParcel(REQUEST_ENTER_SIM_PUK2, aOptions, (aLength, aOptions) => {
+      aOptions.retryCount = aLength ? Buf.readInt32List()[0] : -1;
+      aCallback(aOptions);
+    });
+
+    // Remove v5Legacy.
+    Buf.writeInt32(3);
+    Buf.writeString(aOptions.password);
+    Buf.writeString(aOptions.newPin);
+    Buf.writeString(aOptions.aid || this.context.RIL.aid);
+    Buf.sendParcel();
+  };
+
+  /**
+   * Documentation ....
+   *
    * Set the preferred network type.
    *
    * options:

@@ -349,7 +349,9 @@ RilObject.prototype = {
         });
         break;
       case GECKO_CARDLOCK_PUK2:
-        this.enterICCPUK2(options);
+        this.context.ParcelHelper.send("enterIccPuk2", options, (response) => {
+          this.sendChromeMessage(response);
+        });
         break;
       case GECKO_CARDLOCK_NCK:
       case GECKO_CARDLOCK_NSCK:
@@ -438,28 +440,6 @@ RilObject.prototype = {
     }
     Buf.sendParcel();
   },
-
-  /**
-   * Supplies ICC PUK2 and a new PIN2 to unlock the ICC.
-   *
-   * @param password
-   *        String containing the PUK2 value.
-   * @param newPassword
-   *        String containing the new PIN2 value.
-   * @param [optional] aid
-   *        AID value.
-   */
-   enterICCPUK2: function(options) {
-     let Buf = this.context.Buf;
-     Buf.newParcel(REQUEST_ENTER_SIM_PUK2, options);
-     Buf.writeInt32(this.v5Legacy ? 2 : 3);
-     Buf.writeString(options.password);
-     Buf.writeString(options.newPin);
-     if (!this.v5Legacy) {
-       Buf.writeString(options.aid || this.aid);
-     }
-     Buf.sendParcel();
-   },
 
   /**
    * Helper function for changing ICC locks.
@@ -3912,9 +3892,6 @@ RilObject.prototype = {
   }
 };
 
-RilObject.prototype[REQUEST_ENTER_SIM_PUK2] = function REQUEST_ENTER_SIM_PUK(length, options) {
-  this._processEnterAndChangeICCResponses(length, options);
-};
 RilObject.prototype[REQUEST_CHANGE_SIM_PIN] = function REQUEST_CHANGE_SIM_PIN(length, options) {
   this._processEnterAndChangeICCResponses(length, options);
 };
