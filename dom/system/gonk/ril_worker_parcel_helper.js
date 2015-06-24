@@ -6,6 +6,8 @@
 
 "use strict";
 
+const GET_CURRENT_CALLS_RETRY_MAX = 3
+
 /**
  * ........
  */
@@ -286,6 +288,86 @@
         aCallback(aOptions);
         break;
     }
+  };
+
+  /**
+   * Documentation ....
+   *
+   * Get current voice calls.
+   *
+   * options: None
+   *
+   * response: calls
+   */
+  ParcelHelperObject.prototype.getCurrentCalls = function(aOptions, aCallback) {
+    let Buf = this.context.Buf;
+    let RIL = this.context.RIL;
+    let options = aOptions || {};
+    options.getCurrentCallsRetryCount = options.getCurrentCallsRetryCount || 0;
+
+    RIL.telephonyRequestQueue.push(REQUEST_GET_CURRENT_CALLS, () => {
+      Buf.simpleRequest(REQUEST_GET_CURRENT_CALLS, null, (aLength, aOptions) => {
+        if (aOptions.errorMsg) {
+          if (options.getCurrentCallsRetryCount < GET_CURRENT_CALLS_RETRY_MAX) {
+            options.getCurrentCallsRetryCount++;
+            this.getCurrentCalls(options, aCallback);
+            return;
+          } else {
+            aCallback(aResponse);
+          }
+        }
+
+        let calls_length = 0;
+        // The RIL won't even send us the length integer if there are no active calls.
+        // So only read this integer if the parcel actually has it.
+        if (length) {
+          calls_length = Buf.readInt32();
+        }
+
+        let calls = {};
+        for (let i = 0; i < calls_length; i++) {
+          let call = {};
+
+          // Extra uint32 field to get correct callIndex and rest of call data for
+          // call waiting feature.
+          if (RILQUIRKS_EXTRA_UINT32_2ND_CALL && i > 0) {
+            Buf.readInt32();
+          }
+
+          call.state          = Buf.readInt32(); // CALL_STATE_*
+          call.callIndex      = Buf.readInt32(); // GSM index (1-based)
+          call.toa            = Buf.readInt32();
+          call.isMpty         = Boolean(Buf.readInt32());
+          call.isMT           = Boolean(Buf.readInt32());
+          call.als            = Buf.readInt32();
+          call.isVoice        = Boolean(Buf.readInt32());
+          call.isVoicePrivacy = Boolean(Buf.readInt32());
+          if (RILQUIRKS_CALLSTATE_EXTRA_UINT32) {
+            Buf.readInt32();
+          }
+          call.number             = Buf.readString();
+          call.numberPresentation = Buf.readInt32(); // CALL_PRESENTATION_*
+          call.name               = Buf.readString();
+          call.namePresentation   = Buf.readInt32();
+
+          call.uusInfo = null;
+          let uusInfoPresent = Buf.readInt32();
+          if (uusInfoPresent == 1) {
+            call.uusInfo = {
+              type:     Buf.readInt32(),
+              dcs:      Buf.readInt32(),
+              userData: null //XXX TODO byte array?!?
+            };
+          }
+
+          if (call.isVoice) {
+            calls[call.callIndex] = call;
+          }
+        }
+
+        aCallback({calls: calls});
+      });
+    });
   };
 
   /**

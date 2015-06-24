@@ -1146,15 +1146,6 @@ RilObject.prototype = {
   },
 
   /**
-   * Get current calls.
-   */
-  getCurrentCalls: function(options) {
-    this.telephonyRequestQueue.push(REQUEST_GET_CURRENT_CALLS, () => {
-      this.context.Buf.simpleRequest(REQUEST_GET_CURRENT_CALLS, options);
-    });
-  },
-
-  /**
    * Mute or unmute the radio.
    *
    * @param mute
@@ -4824,7 +4815,14 @@ RilObject.prototype[UNSOLICITED_RESPONSE_RADIO_STATE_CHANGED] = function UNSOLIC
   this.getICCStatus();
 };
 RilObject.prototype[UNSOLICITED_RESPONSE_CALL_STATE_CHANGED] = function UNSOLICITED_RESPONSE_CALL_STATE_CHANGED() {
-  this.getCurrentCalls();
+  this.getCurrentCalls(null, (aResponse) => {
+    if (aResponse.errorMsg) {
+      return;
+    }
+
+    aResponse.rilMessageType = "currentCalls";
+    this.sendChromeMessage(aResponse);
+  });
 };
 RilObject.prototype[UNSOLICITED_RESPONSE_VOICE_NETWORK_STATE_CHANGED] = function UNSOLICITED_RESPONSE_VOICE_NETWORK_STATE_CHANGED() {
   if (DEBUG) {
